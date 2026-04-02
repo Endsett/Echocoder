@@ -7,6 +7,7 @@ import {
   AgentEvent,
   FileCreateEvent,
   FileEditEvent,
+  ResultErrorEvent,
   ToolCallEvent,
   ToolResultEvent,
 } from '../../src/types/agent-events';
@@ -50,6 +51,10 @@ function isFileCreate(event: AgentEvent): event is FileCreateEvent {
 
 function isFileEdit(event: AgentEvent): event is FileEditEvent {
   return event.type === 'normalized' && event.subtype === 'file_edit';
+}
+
+function isResultError(event: AgentEvent): event is ResultErrorEvent {
+  return event.type === 'result' && event.subtype !== 'success';
 }
 
 function testFragmentedAssistantTextDelta(): void {
@@ -168,10 +173,89 @@ function testSyntheticFileCreateAndEditEvents(): void {
   }
 }
 
+function testFlushParsesTrailingIncompleteLine(): void {
+  const events: AgentEvent[] = [];
+  const parser = new NDJSONParser(
+    (event) => events.push(event),
+    (_line, error) => {
+      throw error;
+    }
+  );
+
+  const lineWithoutNewline = JSON.stringify({
+    type: 'assistant',
+    message: {
+      role: 'assistant',
+      content: [{ type: 'text', text: 'tail event' }],
+    },
+  });
+
+  parser.feed(lineWithoutNewline);
+  assert.equal(events.length, 0, 'Event should not emit before newline or flush');
+  parser.flush();
+
+  const textEvent = findEvent(
+    events,
+    (event): event is AgentEvent =>
+      event.type === 'normalized' && event.subtype === 'text_delta'
+  ) as { text: string };
+  assert.equal(textEvent.text, 'tail event');
+}
+
+function testMalformedLineTriggersErrorCallback(): void {
+  const errors: string[] = [];
+  const events: AgentEvent[] = [];
+  const parser = new NDJSONParser(
+    (event) => events.push(event),
+    (_line, error) => errors.push(error.message)
+  );
+
+  parser.feed('{"type":"assistant", invalid json}\n');
+  parser.flush();
+
+  assert.equal(events.length, 0, 'Malformed line must not emit parsed events');
+  assert.equal(errors.length, 1, 'Malformed line must trigger one parse error');
+}
+
+function testUnsupportedShapeTriggersErrorCallback(): void {
+  const errors: string[] = [];
+  const parser = new NDJSONParser(
+    () => {
+      assert.fail('Unsupported shape must not emit events');
+    },
+    (_line, error) => errors.push(error.message)
+  );
+
+  parser.feed(JSON.stringify({ foo: 'bar' }) + '\n');
+  parser.flush();
+
+  assert.equal(errors.length, 1, 'Unsupported shape should call parse error callback');
+}
+
+function testNonSuccessResultSubtypeNormalizesAsError(): void {
+  const events = collectEvents([
+    JSON.stringify({
+      type: 'result',
+      subtype: 'error_during_execution',
+      result: 'Execution failed',
+      is_error: true,
+    }) + '\n',
+  ]);
+
+  const errorEvent = findEvent(events, isResultError);
+  assert.equal(errorEvent.subtype, 'error_during_execution');
+  assert.equal(errorEvent.error, 'Execution failed');
+  assert.equal(errorEvent.is_error, true);
+}
+
 function run(): void {
   testFragmentedAssistantTextDelta();
   testToolCallAndResultNormalization();
   testSyntheticFileCreateAndEditEvents();
+  testFlushParsesTrailingIncompleteLine();
+  testMalformedLineTriggersErrorCallback();
+  testUnsupportedShapeTriggersErrorCallback();
+  testNonSuccessResultSubtypeNormalizesAsError();
   console.log('ndjson-parser tests passed');
 }
 
