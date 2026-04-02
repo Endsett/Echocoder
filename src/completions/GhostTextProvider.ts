@@ -17,13 +17,19 @@ import { AgentEvent, isTextDelta, isResultSuccess } from '../types/agent-events'
 
 export class GhostTextProvider implements vscode.InlineCompletionItemProvider {
   private processManager: ProcessManager;
+  private primaryProcessManager?: ProcessManager;
   private debounceTimer: NodeJS.Timeout | null = null;
   private lastCompletion: string = '';
   private outputChannel: vscode.OutputChannel;
 
-  constructor(processManager: ProcessManager, outputChannel: vscode.OutputChannel) {
+  constructor(
+    processManager: ProcessManager,
+    outputChannel: vscode.OutputChannel,
+    primaryProcessManager?: ProcessManager
+  ) {
     this.processManager = processManager;
     this.outputChannel = outputChannel;
+    this.primaryProcessManager = primaryProcessManager;
   }
 
   async provideInlineCompletionItems(
@@ -39,7 +45,7 @@ export class GhostTextProvider implements vscode.InlineCompletionItemProvider {
     }
 
     // Don't trigger on auto-trigger if agent is busy with a main task
-    if (this.processManager.running) {
+    if (this.processManager.running || this.primaryProcessManager?.running) {
       return undefined;
     }
 
@@ -170,9 +176,10 @@ Continue from where the cursor is:`;
 export function registerGhostTextProvider(
   context: vscode.ExtensionContext,
   processManager: ProcessManager,
-  outputChannel: vscode.OutputChannel
+  outputChannel: vscode.OutputChannel,
+  primaryProcessManager?: ProcessManager
 ): vscode.Disposable {
-  const provider = new GhostTextProvider(processManager, outputChannel);
+  const provider = new GhostTextProvider(processManager, outputChannel, primaryProcessManager);
 
   const disposable = vscode.languages.registerInlineCompletionItemProvider(
     { pattern: '**' }, // All file types

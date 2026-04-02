@@ -161,10 +161,12 @@ Replacement code:`;
         cwd,
         mode: 'inline-edit',
         toolPolicy: 'none',
-      }, token)).catch(() => {
+      }, token)).catch((error) => {
         if (!resolved) {
           resolved = true;
           cleanup();
+          const message = error instanceof Error ? error.message : String(error);
+          vscode.window.showErrorMessage(`EchoCoder could not start inline edit: ${message}`);
           resolve();
         }
       });

@@ -56,7 +56,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   const ghostTextProcessManager = new ProcessManager(outputChannel);
-  registerGhostTextProvider(context, ghostTextProcessManager, outputChannel);
+  registerGhostTextProvider(context, ghostTextProcessManager, outputChannel, processManager);
 
   const agentPanelProvider = new AgentPanelProvider(
     context.extensionUri,

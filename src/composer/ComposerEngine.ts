@@ -63,6 +63,14 @@ export class ComposerEngine {
         this.finalizeCompose();
       }
     });
+
+    // On failure, stop compose mode so stale file events are not carried over.
+    this.eventRouter.onError((event) => {
+      if (this.isComposing) {
+        this.outputChannel.appendLine(`[Composer] Agent error while composing: ${event.error || event.result || 'unknown error'}`);
+        this.cancelCompose();
+      }
+    });
   }
 
   /**
