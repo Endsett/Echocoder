@@ -11,6 +11,7 @@ function testParserToRouterPipeline(): void {
     toolCall: 0,
     toolResult: 0,
     usage: 0,
+    init: 0,
     success: 0,
   };
 
@@ -20,6 +21,7 @@ function testParserToRouterPipeline(): void {
     router.onToolCall(() => { seen.toolCall += 1; }),
     router.onToolResult(() => { seen.toolResult += 1; }),
     router.onUsage(() => { seen.usage += 1; }),
+    router.onInit(() => { seen.init += 1; }),
     router.onSuccess(() => { seen.success += 1; }),
   ];
 
@@ -52,6 +54,14 @@ function testParserToRouterPipeline(): void {
     }) + '\n',
     JSON.stringify({
       type: 'system',
+      subtype: 'init',
+      session_id: 'session-1',
+      model: 'claude-sonnet-4-20250514',
+      cwd: '/tmp',
+      tools: ['Read', 'Write'],
+    }) + '\n',
+    JSON.stringify({
+      type: 'system',
       subtype: 'usage',
       usage: { input_tokens: 12, output_tokens: 8 },
     }) + '\n',
@@ -66,12 +76,13 @@ function testParserToRouterPipeline(): void {
 
   parser.feed(lines[0].slice(0, 40));
   parser.feed(lines[0].slice(40) + lines[1]);
-  parser.feed(lines[2] + lines[3]);
+  parser.feed(lines[2] + lines[3] + lines[4]);
   parser.flush();
 
   assert.equal(seen.text, 1, 'Expected one normalized text delta');
   assert.equal(seen.toolCall, 1, 'Expected one normalized tool call');
   assert.equal(seen.toolResult, 1, 'Expected one normalized tool result');
+  assert.equal(seen.init, 1, 'Expected one init event');
   assert.equal(seen.usage, 1, 'Expected one usage event');
   assert.equal(seen.success, 1, 'Expected one success event');
   assert.ok(seen.any >= 6, 'Expected all raw + normalized events to flow through onAnyEvent');

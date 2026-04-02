@@ -195,6 +195,8 @@ export class NDJSONParser {
           events.push(fileEvent);
         }
       }
+
+      this.pendingTools.delete(toolUseId);
     }
 
     return events;
@@ -297,6 +299,7 @@ export class NDJSONParser {
         subtype: 'file_create',
         path: this.extractFilePath(snapshot.input) || snapshot.resolvedPath,
         content: newContent || (typeof snapshot.input.content === 'string' ? snapshot.input.content : ''),
+        derived_from_tool: true,
       };
     }
 
@@ -306,6 +309,7 @@ export class NDJSONParser {
       path: this.extractFilePath(snapshot.input) || snapshot.resolvedPath,
       old_content: snapshot.oldContent || '',
       new_content: newContent || snapshot.oldContent || '',
+      derived_from_tool: true,
     };
   }
 

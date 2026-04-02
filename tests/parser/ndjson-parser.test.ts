@@ -165,12 +165,28 @@ function testSyntheticFileCreateAndEditEvents(): void {
 
     assert.equal(createEvent.path, createPath);
     assert.equal(createEvent.content, 'created-content');
+    assert.equal(createEvent.derived_from_tool, true);
     assert.equal(editEvent.path, editPath);
     assert.equal(editEvent.old_content, 'old-value');
     assert.equal(editEvent.new_content, 'new-value');
+    assert.equal(editEvent.derived_from_tool, true);
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }
+}
+
+function testToolResultWithoutPendingToolDoesNotEmitSyntheticFileEvents(): void {
+  const events = collectEvents([
+    JSON.stringify({
+      type: 'user',
+      message: {
+        role: 'user',
+        content: [{ type: 'tool_result', tool_use_id: 'missing-tool', content: 'ok', is_error: false }],
+      },
+    }) + '\n',
+  ]);
+
+  assert.equal(events.some((event) => isFileCreate(event) || isFileEdit(event)), false);
 }
 
 function testFlushParsesTrailingIncompleteLine(): void {
@@ -256,6 +272,7 @@ function run(): void {
   testMalformedLineTriggersErrorCallback();
   testUnsupportedShapeTriggersErrorCallback();
   testNonSuccessResultSubtypeNormalizesAsError();
+  testToolResultWithoutPendingToolDoesNotEmitSyntheticFileEvents();
   console.log('ndjson-parser tests passed');
 }
 

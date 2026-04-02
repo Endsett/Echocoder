@@ -180,6 +180,7 @@ export interface FileEditEvent {
   path: string;
   old_content: string;
   new_content: string;
+  derived_from_tool?: boolean;
 }
 
 export interface FileCreateEvent {
@@ -187,6 +188,7 @@ export interface FileCreateEvent {
   subtype: 'file_create';
   path: string;
   content: string;
+  derived_from_tool?: boolean;
 }
 
 export type AgentEvent =

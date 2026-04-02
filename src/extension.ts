@@ -44,7 +44,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   const terminalManager = new AITerminalManager(outputChannel);
   const terminalCapture = new TerminalOutputCapture();
-  const toolInterceptor = new ToolInterceptor(outputChannel, terminalManager);
+  const toolInterceptor = new ToolInterceptor(outputChannel);
   const promptAssembler = new PromptAssembler();
   const composerEngine = new ComposerEngine(eventRouter, outputChannel);
   const diffDecorator = new DiffDecorator();
@@ -110,9 +110,25 @@ export function activate(context: vscode.ExtensionContext) {
 
   eventRouter.onToolCall(async (event) => {
     const result = await toolInterceptor.evaluate(event);
-    if (result === 'denied') {
-      outputChannel.appendLine(`[Security] Tool denied: ${event.tool}. Aborting run.`);
-      processManager.abort(`tool ${event.tool} denied by extension policy`);
+    if (result === 'denied' || result === 'cancelled') {
+      outputChannel.appendLine(`[Security] Tool blocked: ${event.tool} (${result}). Aborting run.`);
+      processManager.abort(`tool ${event.tool} blocked by extension policy`);
+    }
+  });
+
+  eventRouter.onAnyEvent((event) => {
+    if (event.type === 'system' && event.subtype === 'session_state_changed') {
+      outputChannel.appendLine(`[Session] state=${event.state || 'unknown'} session=${event.session_id || 'n/a'}`);
+      return;
+    }
+
+    if (event.type === 'system' && event.subtype.startsWith('hook_')) {
+      if (event.stderr) {
+        outputChannel.appendLine(`[Hook][stderr] ${event.stderr}`);
+      }
+      if (event.stdout) {
+        outputChannel.appendLine(`[Hook][stdout] ${event.stdout}`);
+      }
     }
   });
 
