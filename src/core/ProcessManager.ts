@@ -243,6 +243,7 @@ export class ProcessManager {
   }
 
   private buildArgs(options: SpawnOptions, preflight: AgentPreflightResult): string[] {
+    const config = getConfig();
     const args: string[] = [
       '-p',
       '--output-format',
@@ -251,11 +252,17 @@ export class ProcessManager {
       '--cwd',
       options.cwd,
       '--model',
-      getConfig().model,
+      config.model,
     ];
 
     if (options.toolPolicy === 'none') {
       args.push('--tools', '');
+    }
+
+    const disallowedTools = this.resolveDisallowedTools(options, config);
+    if (disallowedTools.length > 0) {
+      args.push('--disallowedTools', disallowedTools.join(','));
+      this.outputChannel.appendLine(`[Policy] Disallowed tools: ${disallowedTools.join(', ')}`);
     }
 
     if (options.additionalFlags?.length) {
@@ -265,6 +272,29 @@ export class ProcessManager {
     args.push(options.prompt);
     this.outputChannel.appendLine(`[Preflight] Resolved agent command: ${preflight.command} ${preflight.commandArgsPrefix.join(' ')}`.trim());
     return args;
+  }
+
+  private resolveDisallowedTools(options: SpawnOptions, config: EchoCoderConfig): string[] {
+    if (options.toolPolicy === 'none') {
+      return [];
+    }
+
+    const disallowed = new Set<string>();
+    const mode = options.mode || 'chat';
+
+    // Keep terminal execution opt-in across chat/panel/compose runs.
+    if (!config.terminalAutoRun) {
+      disallowed.add('Bash');
+      disallowed.add('PowerShell');
+    }
+
+    // Outside compose flows, avoid direct file mutation tools unless explicitly allowed.
+    if (!config.autoApproveWrites && mode !== 'compose') {
+      disallowed.add('Write');
+      disallowed.add('Edit');
+    }
+
+    return Array.from(disallowed);
   }
 
   private resolveLaunchTarget(config: EchoCoderConfig): LaunchTarget {

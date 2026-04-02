@@ -96,6 +96,20 @@ export class ComposerEngine {
       return;
     }
 
+    const choice = await vscode.window.showInformationMessage(
+      `EchoCoder Composer prepared ${changes.length} file change(s). Apply them now?`,
+      { modal: true },
+      'Apply',
+      'Discard'
+    );
+
+    if (choice !== 'Apply') {
+      this.outputChannel.appendLine(`[Composer] User discarded ${changes.length} pending file changes`);
+      this._onComposerComplete.fire([]);
+      this.changeTracker.clear();
+      return;
+    }
+
     this.outputChannel.appendLine(`[Composer] Applying ${changes.length} file changes atomically`);
 
     // Build a single WorkspaceEdit containing all file mutations
