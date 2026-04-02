@@ -168,6 +168,20 @@ export class DiffDecorator {
   }
 
   /**
+   * Reject all pending changes and clear decorations.
+   */
+  public rejectAllChanges(): void {
+    if (this.pendingChanges.size === 0) {
+      return;
+    }
+
+    this.pendingChanges.clear();
+    this.clearAllDecorations();
+    this._onDidChangeChanges.fire();
+    vscode.commands.executeCommand('setContext', 'echocoder.hasPendingChanges', false);
+  }
+
+  /**
    * Get all pending changes (for CodeLens rendering).
    */
   public getPendingChanges(): PendingChange[] {

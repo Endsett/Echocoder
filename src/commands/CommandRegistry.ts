@@ -10,7 +10,6 @@ import { InlineEditController } from '../editor/InlineEditController';
 import { DiffDecorator } from '../editor/DiffDecorator';
 import { ProcessManager } from '../core/ProcessManager';
 import { PromptAssembler } from '../context/PromptAssembler';
-import { EditorContext } from '../context/EditorContext';
 import { ComposerEngine } from '../composer/ComposerEngine';
 
 export class CommandRegistry {
@@ -54,9 +53,7 @@ export class CommandRegistry {
       const selectedText = editor.document.getText(editor.selection);
       const language = editor.document.languageId;
       const prompt = `Explain the following ${language} code in detail:\n\n\`\`\`${language}\n${selectedText}\n\`\`\``;
-
-      // Send to chat panel
-      vscode.commands.executeCommand('workbench.action.chat.open', { query: `@echo /explain ${prompt}` });
+      this.openChat(`@echo /explain ${prompt}`);
     });
 
     // Fix Diagnostics
@@ -69,19 +66,17 @@ export class CommandRegistry {
         return;
       }
       const errors = diagnostics.map(d => `Line ${d.range.start.line + 1}: ${d.message}`).join('\n');
-      vscode.commands.executeCommand('workbench.action.chat.open', {
-        query: `@echo /fix Fix these errors in ${editor.document.fileName}:\n${errors}`,
-      });
+      this.openChat(`@echo /fix Fix these errors in ${editor.document.fileName}:\n${errors}`);
     });
 
     // Refactor
     this.register('echocoder.refactor', () => {
-      vscode.commands.executeCommand('workbench.action.chat.open', { query: '@echo /refactor ' });
+      this.openChat('@echo /refactor ');
     });
 
     // Composer Mode
     this.register('echocoder.compose', () => {
-      vscode.commands.executeCommand('workbench.action.chat.open', { query: '@echo /compose ' });
+      this.openChat('@echo /compose ');
     });
 
     // Accept Change
@@ -101,17 +96,26 @@ export class CommandRegistry {
 
     // New Session
     this.register('echocoder.newSession', () => {
-      this.processManager.abort();
+      this.processManager.abort('new session requested');
+      this.composerEngine.cancelCompose();
+      this.diffDecorator.rejectAllChanges();
+      vscode.window.showInformationMessage('EchoCoder: Session state cleared.');
     });
 
     // Compact Context
     this.register('echocoder.compact', () => {
-      vscode.window.showInformationMessage('EchoCoder: Context compaction requested. This will be handled by the agent.');
+      if (this.processManager.running) {
+        vscode.window.showInformationMessage(
+          'EchoCoder: Auto-compaction cannot be injected in print mode. End this run and start a fresh chat turn instead.'
+        );
+        return;
+      }
+      this.openChat('@echo /compact Summarize and compact context for the next turn.');
     });
 
     // Terminal Run
     this.register('echocoder.terminalRun', () => {
-      vscode.commands.executeCommand('workbench.action.chat.open', { query: '@echo Run this command: ' });
+      this.openChat('@echo Run this command: ');
     });
 
     return this.disposables;
@@ -123,5 +127,9 @@ export class CommandRegistry {
 
   public dispose(): void {
     this.disposables.forEach(d => d.dispose());
+  }
+
+  private openChat(query: string): void {
+    vscode.commands.executeCommand('workbench.action.chat.open', { query });
   }
 }

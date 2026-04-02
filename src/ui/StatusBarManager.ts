@@ -65,6 +65,10 @@ export class StatusBarManager {
       this.setError();
     });
 
+    this.processManager.onExit(() => {
+      this.setIdle();
+    });
+
     // Listen for config changes
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('echocoder.model') || e.affectsConfiguration('echocoder.provider')) {
