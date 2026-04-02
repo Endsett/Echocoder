@@ -319,7 +319,7 @@
     "build": "node esbuild.js",
     "watch": "node esbuild.js --watch",
     "lint": "eslint src --ext ts",
-    "test:parser": "npx tsc -p tests/parser/tsconfig.json && node tests/parser/dist/tests/parser/ndjson-parser.test.js",
+    "test:parser": "npx tsc -p tests/parser/tsconfig.json && node tests/parser/dist/tests/parser/ndjson-parser.test.js && node tests/parser/dist/tests/parser/event-router.integration.test.js",
     "package": "npx @vscode/vsce package --no-dependencies"
   },
   "devDependencies": {

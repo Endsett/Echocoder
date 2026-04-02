@@ -12,7 +12,9 @@
   },
   "include": [
     "../../src/core/NDJSONParser.ts",
+    "../../src/core/EventRouter.ts",
     "../../src/types/agent-events.ts",
-    "./ndjson-parser.test.ts"
+    "./ndjson-parser.test.ts",
+    "./event-router.integration.test.ts"
   ]
 }
