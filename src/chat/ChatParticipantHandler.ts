@@ -37,6 +37,7 @@ export class ChatParticipantHandler {
     ): Promise<vscode.ChatResult> => {
       const prompt = request.prompt.trim();
       const command = request.command;
+      const isCompose = command === 'compose';
 
       if (!prompt) {
         stream.markdown('EchoCoder needs a prompt before it can start the agent.');
@@ -45,7 +46,7 @@ export class ChatParticipantHandler {
 
       this.outputChannel.appendLine(`[Chat] Received ${command ? `/${command} ` : ''}${prompt.substring(0, 120)}`);
 
-      if (command === 'compose') {
+      if (isCompose) {
         this.composerEngine.startCompose();
         stream.progress('Composer mode activated. File changes will be collected during this run.');
       }
@@ -59,6 +60,9 @@ export class ChatParticipantHandler {
         await this.processManager.ensureReady({ cwd });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        if (isCompose) {
+          this.composerEngine.cancelCompose();
+        }
         stream.markdown(`EchoCoder could not start the agent.\n\n${message}`);
         return { metadata: { command, success: false, error: message } };
       }
@@ -109,6 +113,9 @@ export class ChatParticipantHandler {
           if (isResultError(event)) {
             const message = event.error || event.result || 'Unknown agent error';
             stream.markdown(`\n\nAgent error: ${message}\n`);
+            if (isCompose) {
+              this.composerEngine.cancelCompose();
+            }
             if (!resolved) {
               resolved = true;
               cleanup();
@@ -121,6 +128,9 @@ export class ChatParticipantHandler {
           if (!resolved) {
             resolved = true;
             cleanup();
+            if (isCompose && code !== 0) {
+              this.composerEngine.cancelCompose();
+            }
             if (code && code !== 0) {
               stream.markdown(`\n\nAgent exited with code ${code}. Check the EchoCoder output channel for details.\n`);
             }
@@ -129,11 +139,14 @@ export class ChatParticipantHandler {
         });
 
         this.processManager
-          .spawn({ prompt: fullPrompt, cwd, mode: command === 'compose' ? 'compose' : 'chat' }, token)
+          .spawn({ prompt: fullPrompt, cwd, mode: isCompose ? 'compose' : 'chat' }, token)
           .catch((error) => {
             if (!resolved) {
               resolved = true;
               cleanup();
+              if (isCompose) {
+                this.composerEngine.cancelCompose();
+              }
               const message = error instanceof Error ? error.message : String(error);
               stream.markdown(`\n\nFailed to start agent: ${message}\n`);
               resolve({ metadata: { command, success: false, error: message } });
