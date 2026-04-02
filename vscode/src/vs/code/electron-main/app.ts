@@ -140,6 +140,7 @@ import { McpGatewayChannel } from '../../platform/mcp/node/mcpGatewayChannel.js'
 import { IWebContentExtractorService } from '../../platform/webContentExtractor/common/webContentExtractor.js';
 import { NativeWebContentExtractorService } from '../../platform/webContentExtractor/electron-main/webContentExtractorService.js';
 import ErrorTelemetry from '../../platform/telemetry/electron-main/errorTelemetry.js';
+import { EchocoderCliMainService } from '../../platform/echocoder/electron-main/echocoderCliMainService.js';
 
 /**
  * The main VS Code application. There will only ever be one instance,
@@ -1246,6 +1247,10 @@ export class CodeApplication extends Disposable {
 		// Process
 		const processChannel = ProxyChannel.fromService(new ProcessMainService(this.logService, accessor.get(IDiagnosticsService), accessor.get(IDiagnosticsMainService)), disposables);
 		mainProcessElectronServer.registerChannel('process', processChannel);
+
+		// EchoCoder CLI runtime
+		const echocoderCliChannel = ProxyChannel.fromService(new EchocoderCliMainService(this.logService), disposables);
+		mainProcessElectronServer.registerChannel('echocoderCli', echocoderCliChannel);
 
 		// Encryption
 		const encryptionChannel = ProxyChannel.fromService(accessor.get(IEncryptionMainService), disposables);

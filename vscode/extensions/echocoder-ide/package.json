@@ -265,11 +265,17 @@
           "description": "Allow agent to execute terminal commands without manual approval. ⚠️ Use with caution.",
           "order": 9
         },
+        "echocoder.allowNetworkTools": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow agent network tools (fetch/web requests). If disabled, network tools are blocked.",
+          "order": 10
+        },
         "echocoder.ghostText.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable Ghost Text (AI autocomplete) predictions in the editor.",
-          "order": 10
+          "order": 11
         },
         "echocoder.ghostText.debounceMs": {
           "type": "number",
@@ -277,7 +283,7 @@
           "minimum": 100,
           "maximum": 2000,
           "description": "Debounce delay (ms) before triggering Ghost Text predictions.",
-          "order": 11
+          "order": 12
         },
         "echocoder.contextFiles": {
           "type": "number",
@@ -285,7 +291,7 @@
           "minimum": 1,
           "maximum": 50,
           "description": "Maximum number of files to include in context for the agent.",
-          "order": 12
+          "order": 13
         }
       }
     },
@@ -317,7 +323,6 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
-    "@types/vscode": "^1.100.0",
     "@vscode/vsce": "^3.2.0",
     "esbuild": "^0.24.0",
     "eslint": "^9.0.0",

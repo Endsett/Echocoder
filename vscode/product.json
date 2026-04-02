@@ -148,6 +148,11 @@
 		"tokenEntitlementUrl": "https://api.github.com/copilot_internal/v2/token",
 		"mcpRegistryDataUrl": "https://api.github.com/copilot/mcp_registry"
 	},
+	"echocoder": {
+		"primaryAgent": true,
+		"enableCopilotFallback": true,
+		"runtimeService": "workbench"
+	},
 	"trustedExtensionAuthAccess": {
 		"github": [
 			"GitHub.copilot-chat"

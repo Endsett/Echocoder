@@ -96,6 +96,7 @@ import '../platform/agentHost/electron-browser/agentHostService.js';
 import './services/browserView/electron-browser/playwrightWorkbenchService.js';
 import './services/process/electron-browser/processService.js';
 import './services/power/electron-browser/powerService.js';
+import './services/echocoder/electron-browser/echocoderCliService.js';
 
 import { registerSingleton } from '../platform/instantiation/common/extensions.js';
 import { IUserDataInitializationService, UserDataInitializationService } from './services/userData/browser/userDataInit.js';
@@ -132,6 +133,9 @@ import './contrib/issue/electron-browser/issue.contribution.js';
 
 // Process Explorer
 import './contrib/processExplorer/electron-browser/processExplorer.contribution.js';
+
+// EchoCoder
+import './contrib/echocoder/browser/echocoder.contribution.js';
 
 // Remote
 import './contrib/remote/electron-browser/remote.contribution.js';
