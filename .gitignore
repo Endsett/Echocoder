@@ -3,4 +3,3 @@ out/
 *.vsix
 openclaude/node_modules/
 openclaude/dist/
-openclaude/.git/

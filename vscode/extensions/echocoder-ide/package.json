@@ -1,0 +1,327 @@
+{
+  "name": "echocoder",
+  "displayName": "EchoCoder — AI-Native IDE",
+  "description": "Transform VS Code into a full AI-native IDE powered by OpenClaude. Ghost Text autocomplete, Inline Chat, Composer multi-file editing, and autonomous agent terminal — rivaling Cursor and Windsurf.",
+  "version": "0.1.0",
+  "publisher": "echocoder",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Programming Languages",
+    "Machine Learning"
+  ],
+  "keywords": [
+    "ai",
+    "coding",
+    "agent",
+    "openclaude",
+    "autocomplete",
+    "ghost-text",
+    "inline-chat",
+    "composer",
+    "refactoring"
+  ],
+  "icon": "images/icon.png",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "echocoder.agent",
+        "name": "echo",
+        "fullName": "EchoCoder Agent",
+        "description": "AI-native coding agent powered by OpenClaude. Ask me to write, refactor, debug, or explain code across your entire workspace.",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "edit",
+            "description": "Edit selected code with natural language instructions"
+          },
+          {
+            "name": "explain",
+            "description": "Explain the selected code or concept"
+          },
+          {
+            "name": "fix",
+            "description": "Auto-fix diagnostics and errors in the current file"
+          },
+          {
+            "name": "refactor",
+            "description": "Refactor code across multiple files"
+          },
+          {
+            "name": "test",
+            "description": "Generate tests for the selected code"
+          },
+          {
+            "name": "compose",
+            "description": "Multi-file composer mode — orchestrate codebase-wide changes"
+          }
+        ]
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "echocoder-container",
+          "title": "EchoCoder",
+          "icon": "images/echocoder-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "echocoder-container": [
+        {
+          "id": "echocoder.agentPanel",
+          "name": "Agent",
+          "type": "webview"
+        },
+        {
+          "id": "echocoder.sessionHistory",
+          "name": "Sessions"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "echocoder.inlineEdit",
+        "title": "EchoCoder: Inline Edit (AI)",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.inlineChat",
+        "title": "EchoCoder: Inline Chat",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.explain",
+        "title": "EchoCoder: Explain Selection",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.fix",
+        "title": "EchoCoder: Fix Diagnostics",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.refactor",
+        "title": "EchoCoder: Refactor",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.compose",
+        "title": "EchoCoder: Composer Mode",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.openPanel",
+        "title": "EchoCoder: Open Agent Panel",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.newSession",
+        "title": "EchoCoder: New Session",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.compact",
+        "title": "EchoCoder: Compact Context",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.acceptChange",
+        "title": "EchoCoder: Accept Change",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.rejectChange",
+        "title": "EchoCoder: Reject Change",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.acceptAllChanges",
+        "title": "EchoCoder: Accept All Changes",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.terminalRun",
+        "title": "EchoCoder: Run in AI Terminal",
+        "category": "EchoCoder"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "echocoder.inlineEdit",
+        "key": "ctrl+k",
+        "mac": "cmd+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "echocoder.inlineChat",
+        "key": "ctrl+i",
+        "mac": "cmd+i",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "echocoder.openPanel",
+        "key": "ctrl+l",
+        "mac": "cmd+l"
+      },
+      {
+        "command": "echocoder.explain",
+        "key": "ctrl+shift+k",
+        "mac": "cmd+shift+k",
+        "when": "editorTextFocus && editorHasSelection"
+      },
+      {
+        "command": "echocoder.acceptChange",
+        "key": "ctrl+shift+enter",
+        "mac": "cmd+shift+enter",
+        "when": "echocoder.hasPendingChanges"
+      },
+      {
+        "command": "echocoder.rejectChange",
+        "key": "ctrl+shift+backspace",
+        "mac": "cmd+shift+backspace",
+        "when": "echocoder.hasPendingChanges"
+      }
+    ],
+    "configuration": {
+      "title": "EchoCoder",
+      "properties": {
+        "echocoder.binaryPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the OpenClaude binary. Leave empty for auto-detection.",
+          "order": 1
+        },
+        "echocoder.provider": {
+          "type": "string",
+          "default": "anthropic",
+          "enum": [
+            "anthropic",
+            "openai",
+            "deepseek",
+            "ollama",
+            "custom"
+          ],
+          "enumDescriptions": [
+            "Anthropic Claude (default)",
+            "OpenAI GPT models",
+            "DeepSeek models",
+            "Local Ollama models",
+            "Custom OpenAI-compatible endpoint"
+          ],
+          "description": "AI model provider to use.",
+          "order": 2
+        },
+        "echocoder.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for the selected provider. Stored securely.",
+          "order": 3
+        },
+        "echocoder.apiBaseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Custom API base URL (for custom/ollama providers).",
+          "order": 4
+        },
+        "echocoder.model": {
+          "type": "string",
+          "default": "claude-sonnet-4-20250514",
+          "description": "Model identifier to use (e.g., claude-sonnet-4-20250514, gpt-4o, deepseek-chat).",
+          "order": 5
+        },
+        "echocoder.maxTokenBudget": {
+          "type": "number",
+          "default": 85,
+          "minimum": 50,
+          "maximum": 99,
+          "description": "Auto-compact context when token usage exceeds this percentage of the model's limit.",
+          "order": 6
+        },
+        "echocoder.autoApproveReads": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-approve non-mutating operations (read_file, grep, glob).",
+          "order": 7
+        },
+        "echocoder.autoApproveWrites": {
+          "type": "boolean",
+          "default": false,
+          "description": "Auto-approve file write/edit operations within the workspace.",
+          "order": 8
+        },
+        "echocoder.terminalAutoRun": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow agent to execute terminal commands without manual approval. ⚠️ Use with caution.",
+          "order": 9
+        },
+        "echocoder.ghostText.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Ghost Text (AI autocomplete) predictions in the editor.",
+          "order": 10
+        },
+        "echocoder.ghostText.debounceMs": {
+          "type": "number",
+          "default": 300,
+          "minimum": 100,
+          "maximum": 2000,
+          "description": "Debounce delay (ms) before triggering Ghost Text predictions.",
+          "order": 11
+        },
+        "echocoder.contextFiles": {
+          "type": "number",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 50,
+          "description": "Maximum number of files to include in context for the agent.",
+          "order": 12
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "echocoder.explain",
+          "when": "editorHasSelection",
+          "group": "echocoder@1"
+        },
+        {
+          "command": "echocoder.inlineEdit",
+          "when": "editorHasSelection",
+          "group": "echocoder@2"
+        },
+        {
+          "command": "echocoder.fix",
+          "group": "echocoder@3"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "node esbuild.js --production",
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "lint": "eslint src --ext ts",
+    "package": "npx @vscode/vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.100.0",
+    "@vscode/vsce": "^3.2.0",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.0.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {}
+}
