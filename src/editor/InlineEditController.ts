@@ -15,20 +15,24 @@ import * as vscode from 'vscode';
 import { ProcessManager } from '../core/ProcessManager';
 import { DiffDecorator, PendingChange } from './DiffDecorator';
 import { AgentEvent, isTextDelta, isResultSuccess, isResultError } from '../types/agent-events';
+import { PromptAssembler } from '../context/PromptAssembler';
 
 export class InlineEditController {
   private processManager: ProcessManager;
   private diffDecorator: DiffDecorator;
   private outputChannel: vscode.OutputChannel;
+  private promptAssembler: PromptAssembler;
 
   constructor(
     processManager: ProcessManager,
     diffDecorator: DiffDecorator,
-    outputChannel: vscode.OutputChannel
+    outputChannel: vscode.OutputChannel,
+    promptAssembler: PromptAssembler
   ) {
     this.processManager = processManager;
     this.diffDecorator = diffDecorator;
     this.outputChannel = outputChannel;
+    this.promptAssembler = promptAssembler;
   }
 
   /**
@@ -95,24 +99,17 @@ export class InlineEditController {
     const beforeContext = document.getText(new vscode.Range(contextStart, 0, selection.start.line, 0));
     const afterContext = document.getText(new vscode.Range(selection.end.line + 1, 0, contextEnd, document.lineAt(contextEnd).text.length));
 
-    const prompt = `Edit the following ${language} code according to the instruction below. Return ONLY the replacement code that should substitute the selected block. No explanations, no markdown code fences, just the raw replacement code.
-
-File: ${filePath}
-Language: ${language}
-Lines: ${startLine}-${endLine}
-
-Instruction: ${instruction}
-
-Context before selection:
-${beforeContext}
-
-Selected code to edit:
-${selectedText}
-
-Context after selection:
-${afterContext}
-
-Replacement code:`;
+    const assembled = await this.promptAssembler.assembleInlineEditPrompt({
+      filePath,
+      language,
+      startLine,
+      endLine,
+      instruction,
+      beforeContext,
+      selectedText,
+      afterContext,
+    });
+    const prompt = assembled.prompt;
 
     return new Promise<void>((resolve) => {
       let resultText = '';
@@ -154,7 +151,7 @@ Replacement code:`;
         }
       });
 
-      const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
+      const cwd = assembled.cwd;
 
       this.processManager.ensureReady({ cwd }).then(() => this.processManager.spawn({
         prompt,

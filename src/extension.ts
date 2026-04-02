@@ -48,7 +48,12 @@ export function activate(context: vscode.ExtensionContext) {
   const promptAssembler = new PromptAssembler();
   const composerEngine = new ComposerEngine(eventRouter, outputChannel);
   const diffDecorator = new DiffDecorator();
-  const inlineEditController = new InlineEditController(processManager, diffDecorator, outputChannel);
+  const inlineEditController = new InlineEditController(
+    processManager,
+    diffDecorator,
+    outputChannel,
+    promptAssembler
+  );
   const codeLensProvider = new CodeLensApprovalProvider(diffDecorator);
 
   context.subscriptions.push(
@@ -56,7 +61,13 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   const ghostTextProcessManager = new ProcessManager(outputChannel);
-  registerGhostTextProvider(context, ghostTextProcessManager, outputChannel, processManager);
+  registerGhostTextProvider(
+    context,
+    ghostTextProcessManager,
+    outputChannel,
+    processManager,
+    promptAssembler
+  );
 
   const agentPanelProvider = new AgentPanelProvider(
     context.extensionUri,

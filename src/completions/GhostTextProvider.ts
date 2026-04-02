@@ -14,10 +14,12 @@ import * as vscode from 'vscode';
 import { ProcessManager } from '../core/ProcessManager';
 import { getConfig } from '../types/config';
 import { AgentEvent, isTextDelta, isResultSuccess } from '../types/agent-events';
+import { PromptAssembler } from '../context/PromptAssembler';
 
 export class GhostTextProvider implements vscode.InlineCompletionItemProvider {
   private processManager: ProcessManager;
   private primaryProcessManager?: ProcessManager;
+  private promptAssembler: PromptAssembler;
   private debounceTimer: NodeJS.Timeout | null = null;
   private lastCompletion: string = '';
   private outputChannel: vscode.OutputChannel;
@@ -25,11 +27,13 @@ export class GhostTextProvider implements vscode.InlineCompletionItemProvider {
   constructor(
     processManager: ProcessManager,
     outputChannel: vscode.OutputChannel,
-    primaryProcessManager?: ProcessManager
+    primaryProcessManager?: ProcessManager,
+    promptAssembler?: PromptAssembler
   ) {
     this.processManager = processManager;
     this.outputChannel = outputChannel;
     this.primaryProcessManager = primaryProcessManager;
+    this.promptAssembler = promptAssembler || new PromptAssembler();
   }
 
   async provideInlineCompletionItems(
@@ -62,26 +66,16 @@ export class GhostTextProvider implements vscode.InlineCompletionItemProvider {
     const language = document.languageId;
     const fileName = document.fileName;
 
-    // Build a focused completion prompt
-    const prompt = `Complete the following ${language} code. Respond ONLY with the code that should come next, nothing else. No explanations, no markdown, just raw code continuation.
-
-File: ${fileName}
-Language: ${language}
-
-Code before cursor:
-\`\`\`
-${prefix}
-\`\`\`
-
-Code after cursor:
-\`\`\`
-${suffix}
-\`\`\`
-
-Continue from where the cursor is:`;
+    const assembled = this.promptAssembler.assembleCompletionPrompt({
+      filePath: fileName,
+      language,
+      prefix,
+      suffix,
+    });
+    const prompt = assembled.prompt;
 
     try {
-      const completion = await this.getCompletion(prompt, document, token);
+      const completion = await this.getCompletion(prompt, assembled.cwd, token);
 
       if (!completion || token.isCancellationRequested) {
         return undefined;
@@ -105,7 +99,7 @@ Continue from where the cursor is:`;
    */
   private getCompletion(
     prompt: string,
-    document: vscode.TextDocument,
+    cwd: string,
     token: vscode.CancellationToken
   ): Promise<string | null> {
     return new Promise((resolve) => {
@@ -146,8 +140,6 @@ Continue from where the cursor is:`;
         }
       });
 
-      const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
-
       this.processManager.ensureReady({ cwd }).then(() => this.processManager.spawn({
         prompt,
         cwd,
@@ -177,9 +169,15 @@ export function registerGhostTextProvider(
   context: vscode.ExtensionContext,
   processManager: ProcessManager,
   outputChannel: vscode.OutputChannel,
-  primaryProcessManager?: ProcessManager
+  primaryProcessManager?: ProcessManager,
+  promptAssembler?: PromptAssembler
 ): vscode.Disposable {
-  const provider = new GhostTextProvider(processManager, outputChannel, primaryProcessManager);
+  const provider = new GhostTextProvider(
+    processManager,
+    outputChannel,
+    primaryProcessManager,
+    promptAssembler
+  );
 
   const disposable = vscode.languages.registerInlineCompletionItemProvider(
     { pattern: '**' }, // All file types
