@@ -31,7 +31,7 @@ const EXEC_TOOLS = new Set([
 ]);
 
 const NETWORK_TOOLS = new Set([
-  'fetch', 'curl', 'http_request', 'web_request',
+  'fetch', 'curl', 'http_request', 'web_request', 'webfetch', 'web_search', 'websearch',
 ]);
 
 // Sensitive file patterns that should NEVER be auto-approved
@@ -99,6 +99,11 @@ export class ToolInterceptor {
 
     // 4. Network requests — ALWAYS prompt
     if (NETWORK_TOOLS.has(tool)) {
+      if (!config.allowNetworkTools) {
+        this.outputChannel.appendLine(`[Security] BLOCKED (network disabled): ${event.tool}`);
+        vscode.window.showWarningMessage(`EchoCoder blocked network tool ${event.tool}. Enable echocoder.allowNetworkTools to permit it.`);
+        return 'denied';
+      }
       return this.promptUser(event, 'network');
     }
 

@@ -19,6 +19,7 @@ export interface EchoCoderConfig {
   autoApproveReads: boolean;
   autoApproveWrites: boolean;
   terminalAutoRun: boolean;
+  allowNetworkTools: boolean;
   ghostTextEnabled: boolean;
   ghostTextDebounceMs: number;
   contextFiles: number;
@@ -41,6 +42,7 @@ export function getConfig(): EchoCoderConfig {
     autoApproveReads: cfg.get<boolean>('autoApproveReads', true),
     autoApproveWrites: cfg.get<boolean>('autoApproveWrites', false),
     terminalAutoRun: cfg.get<boolean>('terminalAutoRun', false),
+    allowNetworkTools: cfg.get<boolean>('allowNetworkTools', false),
     ghostTextEnabled: cfg.get<boolean>('ghostText.enabled', true),
     ghostTextDebounceMs: cfg.get<number>('ghostText.debounceMs', 300),
     contextFiles: cfg.get<number>('contextFiles', 10),

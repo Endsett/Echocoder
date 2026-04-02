@@ -288,6 +288,14 @@ export class ProcessManager {
       disallowed.add('PowerShell');
     }
 
+    // Network tools are opt-in; keep them disabled unless explicitly enabled.
+    if (!config.allowNetworkTools) {
+      disallowed.add('WebFetch');
+      disallowed.add('WebSearch');
+      disallowed.add('Fetch');
+      disallowed.add('Curl');
+    }
+
     // Outside compose flows, avoid direct file mutation tools unless explicitly allowed.
     if (!config.autoApproveWrites && mode !== 'compose') {
       disallowed.add('Write');

@@ -1,7 +1,7 @@
 {
   "name": "echocoder",
-  "displayName": "EchoCoder — AI-Native IDE",
-  "description": "Transform VS Code into a full AI-native IDE powered by OpenClaude. Ghost Text autocomplete, Inline Chat, Composer multi-file editing, and autonomous agent terminal — rivaling Cursor and Windsurf.",
+  "displayName": "EchoCoder � AI-Native IDE",
+  "description": "Transform VS Code into a full AI-native IDE powered by OpenClaude. Ghost Text autocomplete, Inline Chat, Composer multi-file editing, and autonomous agent terminal � rivaling Cursor and Windsurf.",
   "version": "0.1.0",
   "publisher": "echocoder",
   "license": "MIT",
@@ -61,7 +61,7 @@
           },
           {
             "name": "compose",
-            "description": "Multi-file composer mode — orchestrate codebase-wide changes"
+            "description": "Multi-file composer mode � orchestrate codebase-wide changes"
           }
         ]
       }
@@ -262,14 +262,14 @@
         "echocoder.terminalAutoRun": {
           "type": "boolean",
           "default": false,
-          "description": "Allow agent to execute terminal commands without manual approval. ⚠️ Use with caution.",
+          "description": "Allow agent to execute terminal commands without manual approval. ?? Use with caution.",
           "order": 9
         },
         "echocoder.ghostText.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable Ghost Text (AI autocomplete) predictions in the editor.",
-          "order": 10
+          "order": 11
         },
         "echocoder.ghostText.debounceMs": {
           "type": "number",
@@ -277,7 +277,7 @@
           "minimum": 100,
           "maximum": 2000,
           "description": "Debounce delay (ms) before triggering Ghost Text predictions.",
-          "order": 11
+          "order": 12
         },
         "echocoder.contextFiles": {
           "type": "number",
@@ -285,7 +285,13 @@
           "minimum": 1,
           "maximum": 50,
           "description": "Maximum number of files to include in context for the agent.",
-          "order": 12
+          "order": 13
+        },
+        "echocoder.allowNetworkTools": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow agent network tools (fetch/web requests). If disabled, network tools are blocked.",
+          "order": 10
         }
       }
     },
