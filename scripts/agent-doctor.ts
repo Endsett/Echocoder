@@ -64,8 +64,15 @@ async function runDoctor() {
       
       console.log('Pushing fix to remote...');
       if (process.env.CI) {
-        // Use the current ref to avoid pushing to the wrong location
-        execSync('git push origin HEAD', { stdio: 'inherit' });
+        // If it's a pull request, we need to push to the source branch, not the merge ref.
+        const headRef = process.env.GITHUB_HEAD_REF;
+        if (headRef) {
+          console.log(`Pushing to source branch: ${headRef}`);
+          execSync(`git push origin HEAD:${headRef}`, { stdio: 'inherit' });
+        } else {
+          console.log('Pushing to default branch ref (push event)');
+          execSync('git push origin HEAD', { stdio: 'inherit' });
+        }
       }
       console.log('✅ Self-healing complete. CI should re-trigger.');
     } else {
