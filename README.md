@@ -1,60 +1,98 @@
-# EchoCoder - AI-Native IDE
+# EchoCoder — AI-Native IDE
 
-EchoCoder is a VS Code extension that runs OpenClaude in print mode and maps its NDJSON event stream into native editor surfaces:
-- Native `@echo` chat participant
-- Inline edit with accept/reject flow
-- Ghost text completions
-- Composer-style multi-file apply via one `WorkspaceEdit`
+<p align="center">
+  <strong>Transform VS Code into a full AI-native IDE powered by OpenClaude.</strong><br>
+  Ghost Text autocomplete · Inline Chat · Composer · Plan → Execute → Verify
+</p>
 
-## Features
+---
 
-- Agent sidebar panel (`Ctrl+L`)
-- Inline edit (`Ctrl+K`) and inline chat (`Ctrl+I`)
-- Explain and diagnostics helper commands
-- Composer mode for grouped file edits
-- Tool approval policy with read/write/terminal/network controls
-- Status bar token usage and run activity
+## ✨ Features
 
-## Configuration
+| Feature | Shortcut | Description |
+|---------|----------|-------------|
+| 🤖 **Agent Panel** | `Ctrl+L` | Rich chat sidebar with streaming markdown and tool progress |
+| 📋 **Workflow Engine** | — | Plan → Approve → Execute → Verify loop for safe AI execution |
+| 👻 **Ghost Text** | — | AI autocomplete predictions as you type |
+| ✏️ **Inline Edit** | `Ctrl+K` | Edit selected code with natural language |
+| 🎼 **Composer** | — | Multi-file atomic edits via `WorkspaceEdit` |
+| 💬 **@echo Chat** | — | Native VS Code Chat participant with slash commands |
+| 💻 **AI Terminal** | — | Dedicated terminal for agent commands |
+| 🛡️ **Security** | — | Tiered tool approval with sensitive path blocking |
+
+## 🚀 Quick Start
+
+1. Install the `.vsix` extension in VS Code
+2. Set your API key in Settings → `echocoder.apiKey`
+3. Press `Ctrl+L` to open the Agent Panel
+4. Type a prompt and let EchoCoder plan, execute, and verify
+
+## 📖 Documentation
+
+Full documentation is available in the [**Wiki**](https://github.com/Endsett/Echocoder/wiki):
+
+- [Getting Started](https://github.com/Endsett/Echocoder/wiki/Getting-Started)
+- [Architecture Overview](https://github.com/Endsett/Echocoder/wiki/Architecture-Overview)
+- [Workflow Engine](https://github.com/Endsett/Echocoder/wiki/Workflow-Engine)
+- [Security Model](https://github.com/Endsett/Echocoder/wiki/Security-Model)
+- [Context Engine](https://github.com/Endsett/Echocoder/wiki/Context-Engine)
+- [UI Components](https://github.com/Endsett/Echocoder/wiki/UI-Components)
+- [AI Features](https://github.com/Endsett/Echocoder/wiki/AI-Features)
+- [Configuration Reference](https://github.com/Endsett/Echocoder/wiki/Configuration-Reference)
+- [Development Guide](https://github.com/Endsett/Echocoder/wiki/Development-Guide)
+
+## ⚙️ Configuration
 
 | Setting | Default | Description |
 |---|---|---|
-| `echocoder.binaryPath` | auto-detect | Absolute path to OpenClaude binary. |
-| `echocoder.provider` | `anthropic` | Provider (`anthropic`, `openai`, `deepseek`, `ollama`, `custom`). |
-| `echocoder.model` | `claude-sonnet-4-20250514` | Model identifier passed to OpenClaude. |
-| `echocoder.apiKey` | empty | API key for selected provider. |
-| `echocoder.apiBaseUrl` | empty | Optional base URL for compatible providers. |
-| `echocoder.autoApproveReads` | `true` | Auto-approve non-mutating read tools. |
-| `echocoder.autoApproveWrites` | `false` | Auto-approve file write/edit tools (still blocks sensitive paths). |
-| `echocoder.terminalAutoRun` | `false` | Auto-approve terminal execution tools. |
-| `echocoder.allowNetworkTools` | `false` | Permit network tools (`fetch`, `web_search`, etc.). |
-| `echocoder.ghostText.enabled` | `true` | Enable ghost text completions. |
-| `echocoder.maxTokenBudget` | `85` | Token budget threshold for context warnings. |
+| `echocoder.provider` | `anthropic` | Provider: `anthropic`, `openai`, `deepseek`, `ollama`, `custom` |
+| `echocoder.model` | `claude-sonnet-4-20250514` | Model identifier |
+| `echocoder.apiKey` | — | API key for your provider |
+| `echocoder.autoApproveReads` | `true` | Auto-approve read tools |
+| `echocoder.autoApproveWrites` | `false` | Auto-approve write tools (sensitive paths always blocked) |
+| `echocoder.ghostText.enabled` | `true` | Enable Ghost Text autocomplete |
 
-## Security Model
+See the [Configuration Reference](https://github.com/Endsett/Echocoder/wiki/Configuration-Reference) for all settings.
 
-- Reads: auto-approved when enabled
-- Writes: blocked for sensitive paths (`.env`, `.ssh`, credential/key/token/password patterns) and outside workspace roots
-- Terminal: approval required unless `terminalAutoRun` is enabled
-- Network: blocked unless `allowNetworkTools` is enabled, then approval required
+## 🔐 Security Model
 
-## Architecture
+- **Reads**: Auto-approved when enabled
+- **Writes**: Blocked for `.env`, `.ssh`, credential files, and paths outside workspace
+- **Terminal**: Requires explicit approval
+- **Network**: Blocked by default
+- **Workflow**: Planning phase runs with mutating tools disabled
 
-- `ProcessManager`: canonical spawn/preflight/lifecycle owner
-- `NDJSONParser`: parses stream-json safely across fragmented chunks
-- `EventRouter`: typed fan-out for all extension surfaces
-- `PromptAssembler`: reusable context bundles for chat/edit/completion/compose
-- `ToolInterceptor`: extension-mediated tool approval and policy enforcement
+## 🏗️ Architecture
 
-## Development
-
-```bash
-npm run build
-npm run test:parser
+```
+User → PromptAssembler → ProcessManager → NDJSONParser → EventRouter → UI Surfaces
+                              ↕
+                     OpenClaude CLI (child process)
 ```
 
-## Requirements
+Key modules:
+- `WorkflowLoop` — Plan → Approve → Execute → Verify orchestration
+- `ProcessManager` — Agent process lifecycle
+- `NDJSONParser` — Stream-safe NDJSON parsing
+- `EventRouter` — Typed event fan-out
+- `ToolInterceptor` — Security policy enforcement
+
+## 🧪 Development
+
+```bash
+npm install
+npm run build
+npm run test:parser
+npm run test:workflow
+npm run package          # Build .vsix
+```
+
+## 📋 Requirements
 
 - VS Code `1.100.0+`
-- OpenClaude CLI binary available via settings path or auto-detection
-- Provider credentials for non-local providers
+- OpenClaude CLI binary
+- Provider API key (or Ollama for local models)
+
+## 📄 License
+
+MIT
