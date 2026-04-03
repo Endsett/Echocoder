@@ -19,6 +19,11 @@ export interface Session {
   turns: Turn[];
   startTime: number;
   lastUpdated: number;
+  model: string;
+  totalTokens?: {
+    input: number;
+    output: number;
+  };
 }
 
 /** Maximum number of turns to keep in context to prevent token explosion. */
@@ -37,14 +42,21 @@ export class SessionManager {
    * Add a new conversation turn to the active session.
    * Automatically creates a new session if none exists.
    */
-  public addTurn(role: 'user' | 'assistant', content: string): void {
+  public addTurn(role: 'user' | 'assistant', content: string, model?: string): void {
     if (!this.activeSession) {
       this.activeSession = {
         id: `session-${Date.now()}`,
         turns: [],
         startTime: Date.now(),
         lastUpdated: Date.now(),
+        model: model || 'claude-3-sonnet',
       };
+    }
+
+    // Deduplication: Don't add if it's identical to the last turn of the same role
+    const lastTurn = this.activeSession.turns[this.activeSession.turns.length - 1];
+    if (lastTurn && lastTurn.role === role && lastTurn.content === content) {
+      return;
     }
 
     this.activeSession.turns.push({
@@ -89,6 +101,23 @@ export class SessionManager {
     }).join('\n\n');
 
     return `\n<echo_history>\n${historyBlock}\n</echo_history>\n`;
+  }
+
+  /**
+   * Simple character-based token estimator (Roughly 4 chars per token)
+   */
+  public estimateTokens(text: string): number {
+    return Math.ceil(text.length / 4);
+  }
+
+  public updateUsage(input: number, output: number): void {
+    if (this.activeSession) {
+      this.activeSession.totalTokens = {
+        input: (this.activeSession.totalTokens?.input || 0) + input,
+        output: (this.activeSession.totalTokens?.output || 0) + output,
+      };
+      this.persistSession();
+    }
   }
 
   public getActiveSession(): Session | null {

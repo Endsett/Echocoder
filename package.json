@@ -307,6 +307,20 @@
           "default": false,
           "description": "Allow agent network tools (fetch/web requests). If disabled, network tools are blocked.",
           "order": 10
+        },
+        "echocoder.executionTimeout": {
+          "type": "number",
+          "default": 60000,
+          "minimum": 10000,
+          "maximum": 600000,
+          "description": "Maximum time (ms) to wait for an agent run before termination.",
+          "order": 14
+        },
+        "echocoder.agentTraceEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable detailed CLI trace logging in the Output channel.",
+          "order": 15
         }
       }
     },
@@ -336,6 +350,7 @@
     "lint": "eslint src --ext ts",
     "test:parser": "npx tsc -p tests/parser/tsconfig.json && node tests/parser/dist/tests/parser/ndjson-parser.test.js && node tests/parser/dist/tests/parser/event-router.integration.test.js",
     "test:workflow": "npx tsc -p tests/workflow/tsconfig.json && node tests/workflow/dist/tests/workflow/loop.test.js",
+    "test:runtime": "npx tsc -p src/tests/tsconfig.json && node src/tests/dist/tests/SessionManager.test.js && node src/tests/dist/tests/ProcessManager.test.js",
     "package": "npx @vscode/vsce package --no-dependencies"
   },
   "devDependencies": {
