@@ -63,17 +63,17 @@ async function classifyRisk(diffFile: string) {
   if (prNumber) {
     try {
       console.log(`Applying label '${riskTier}' to PR #${prNumber}...`);
-      execSync(`gh pr edit ${prNumber} --add-label "${riskTier}"`);
+      execSync(`gh pr edit ${prNumber} --add-label "${riskTier}"`, { stdio: 'inherit' });
       
       if (shouldApprove) {
         console.log(`Auto-approving PR #${prNumber} due to Low Risk...`);
-        execSync(`gh pr review ${prNumber} --approve --body "🤖 **Autonomous Agent**: Auto-approved due to low risk classification."`);
+        execSync(`gh pr review ${prNumber} --approve --body "🤖 **Autonomous Agent**: Auto-approved due to low risk classification."`, { stdio: 'inherit' });
       }
     } catch (err: any) {
-      console.error(`Failed to execute autonomous GitHub actions: ${err.message}`);
+      console.error(`❌ Failed to execute autonomous GitHub actions: ${err.message}`);
     }
   } else {
-    console.log('PR_NUMBER not set, skipping autonomous GitHub actions.');
+    console.log('⚠️ PR_NUMBER not set. In a standard PR build, this indicates a trigger error. Skipping autonomous GitHub actions.');
   }
 }
 
@@ -81,5 +81,5 @@ const diffPath = process.argv[2] || 'diff.txt';
 if (fs.existsSync(diffPath)) {
   classifyRisk(diffPath);
 } else {
-  console.log('No diff found. Defaulting to RISK_TIER: UNKNOWN');
+  console.log(`⚠️ Diff file not found at ${diffPath}. Defaulting to RISK_TIER: UNKNOWN`);
 }

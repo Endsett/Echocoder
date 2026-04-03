@@ -54,7 +54,7 @@ async function runDoctor() {
   try {
     const status = execSync('git status --porcelain').toString();
     if (status.length > 0) {
-      console.log('Setting Agent Git Identity...');
+      console.log('🤖 Agentic remediation: Local changes detected. Setting identity...');
       execSync('git config --global user.name "EchoCoder Agent"');
       execSync('git config --global user.email "agent@echocoder.ai"');
 
@@ -64,15 +64,18 @@ async function runDoctor() {
       
       console.log('Pushing fix to remote...');
       if (process.env.CI) {
-        execSync('git push origin HEAD');
+        // Use the current ref to avoid pushing to the wrong location
+        execSync('git push origin HEAD', { stdio: 'inherit' });
       }
       console.log('✅ Self-healing complete. CI should re-trigger.');
     } else {
-      console.log('No local changes made. Self-healing was unable to resolve the issue directly.');
+      console.log('ℹ️ No local changes made. Self-healing was unable to resolve the issue directly.');
     }
   } catch (err: any) {
-    console.error('Failed to commit remediation:', err.message);
+    console.error('❌ Failed to commit remediation:', err.message);
   }
 }
 
-runDoctor();
+runDoctor().catch(err => {
+  console.error('❌ Pipeline Doctor CRITICAL FAILURE:', err);
+});
