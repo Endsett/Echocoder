@@ -1,0 +1,22 @@
+{
+  "$schema": "https://help.stryker-mutator.io/rschema/stryker-config.schema.json",
+  "packageManager": "npm",
+  "reporters": [
+    "html",
+    "clear-text",
+    "progress"
+  ],
+  "testRunner": "command",
+  "commandRunner": {
+    "command": "npm run test:parser"
+  },
+  "coverageAnalysis": "off",
+  "mutate": [
+    "src/core/NDJSONParser.ts",
+    "src/core/ProcessManager.ts"
+  ],
+  "checkers": ["typescript"],
+  "typescriptChecker": {
+    "tsconfigFile": "tsconfig.json"
+  }
+}

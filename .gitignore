@@ -4,3 +4,4 @@ out/
 openclaude/node_modules/
 openclaude/dist/
 tests/parser/dist/
+*.txt
