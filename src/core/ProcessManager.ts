@@ -185,6 +185,14 @@ export class ProcessManager {
       }
     );
 
+    // Notify listeners that the system has initialized
+    this.emitEvent({
+      type: 'system',
+      subtype: 'init',
+      model: config.model,
+      cwd: options.cwd,
+    });
+
     this.process.stdout?.setEncoding('utf-8');
     this.process.stdout?.on('data', (chunk: string) => {
       this.parser?.feed(chunk);
