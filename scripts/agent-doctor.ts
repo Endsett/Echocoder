@@ -54,14 +54,17 @@ async function runDoctor() {
   try {
     const status = execSync('git status --porcelain').toString();
     if (status.length > 0) {
+      console.log('Setting Agent Git Identity...');
+      execSync('git config --global user.name "EchoCoder Agent"');
+      execSync('git config --global user.email "agent@echocoder.ai"');
+
       console.log('Applying remediation commit...');
       execSync('git add .');
       execSync(`git commit -m "fix(ci): autonomous self-healing - ${proposedFix}"`);
-      // Warning: Requires GITHUB_TOKEN write access
-      console.log('Pushing fix to remote... (dry run for local)');
+      
+      console.log('Pushing fix to remote...');
       if (process.env.CI) {
-        // execSync('git push origin HEAD');
-        console.log('In CI: Make sure to uncomment push command if GITHUB_TOKEN has write access.');
+        execSync('git push origin HEAD');
       }
       console.log('✅ Self-healing complete. CI should re-trigger.');
     } else {
