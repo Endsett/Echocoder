@@ -7,7 +7,33 @@ on:
     branches: [ main ]
 
 jobs:
+  sentry:
+    name: 🛡️ Fork Sentry Guard
+    runs-on: ubuntu-latest
+    outputs:
+      safe_to_run: ${{ steps.gate.outputs.safe_to_run }}
+    steps:
+    - name: Verify contributor trust and safety
+      id: gate
+      run: |
+        # Check if the PR is from a fork
+        IS_FORK=${{ github.event.pull_request.head.repo.full_name != github.repository }}
+        
+        # Check if the "status: safe-to-test" label is present
+        LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
+        HAS_LABEL=$(echo $LABELS | grep -c "status: safe-to-test" || true)
+
+        if [ "$IS_FORK" = "true" ] && [ "$HAS_LABEL" = "0" ]; then
+          echo "⚠️ Unauthorized Fork detected. This PR requires a 'status: safe-to-test' label from a maintainer."
+          echo "safe_to_run=false" >> $GITHUB_OUTPUT
+        else
+          echo "✅ PR and Contributor verified. Proceeding with Agentic CI."
+          echo "safe_to_run=true" >> $GITHUB_OUTPUT
+        fi
+
   build-and-test:
+    needs: sentry
+    if: needs.sentry.outputs.safe_to_run == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write

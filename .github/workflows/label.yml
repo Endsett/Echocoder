@@ -30,8 +30,25 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Run Risk Classifier and Auto-Approve
-      run: npx ts-node scripts/risk_classifier.ts pr_diff.txt
+    - name: Run Scaling Agent Triad (Area, Trust, ATC)
+      run: |
+        echo "📡 Orchestrating scaling agents for PR #${{ github.event.pull_request.number }}..."
+        
+        # 🏷️ Area Triager: Categorize PR by code area
+        npx ts-node scripts/area_triager.ts
+        
+        # 👤 Trust Checker: Check contributor reputation
+        npx ts-node scripts/trust_checker.ts ${{ github.event.pull_request.user.login }}
+        
+        # ✍️ Scribe: Check for documentation parity
+        npx ts-node scripts/doc_sync_agent.ts
+        
+        # 💰 Accountant: Optimize test execution costs
+        npx ts-node scripts/cost_optimizer.ts
+        
+        # 📡 ATC: Check for merge conflicts
+        npx ts-node scripts/conflict_atc.ts
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
+        PR_AUTHOR: ${{ github.event.pull_request.user.login }}
