@@ -23,6 +23,8 @@ export interface EchoCoderConfig {
   ghostTextEnabled: boolean;
   ghostTextDebounceMs: number;
   contextFiles: number;
+  executionTimeout: number;
+  agentTraceEnabled: boolean;
 }
 
 /**
@@ -46,6 +48,8 @@ export function getConfig(): EchoCoderConfig {
     ghostTextEnabled: cfg.get<boolean>('ghostText.enabled', true),
     ghostTextDebounceMs: cfg.get<number>('ghostText.debounceMs', 300),
     contextFiles: cfg.get<number>('contextFiles', 10),
+    executionTimeout: cfg.get<number>('executionTimeout', 60000),
+    agentTraceEnabled: cfg.get<boolean>('agentTraceEnabled', false),
   };
 }
 

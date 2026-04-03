@@ -51,8 +51,14 @@ export class NDJSONParser {
   }
 
   private processBuffer(): void {
-    let newlineIndex: number;
+    const MAX_BUFFER_SIZE = 5 * 1024 * 1024; // 5MB limit
+    if (this.buffer.length > MAX_BUFFER_SIZE) {
+      this.onError(this.buffer.substring(0, 100), new Error('Buffer overflow: stream exceeded 5MB without a newline.'));
+      this.buffer = '';
+      return;
+    }
 
+    let newlineIndex: number;
     while ((newlineIndex = this.buffer.indexOf('\n')) !== -1) {
       const line = this.buffer.slice(0, newlineIndex).trim();
       this.buffer = this.buffer.slice(newlineIndex + 1);
@@ -61,8 +67,23 @@ export class NDJSONParser {
         continue;
       }
 
+      // Check if line is likely JSON before parsing
+      if (!line.startsWith('{')) {
+        // Log non-JSON output separately instead of as a parse error
+        this.emitRawDebug(line);
+        continue;
+      }
+
       this.parseLine(line);
     }
+  }
+
+  private emitRawDebug(line: string): void {
+    this.onEvent({
+      type: 'system',
+      subtype: 'log',
+      message: `[Raw CLI] ${line}`,
+    } as any);
   }
 
   private parseLine(line: string): void {
