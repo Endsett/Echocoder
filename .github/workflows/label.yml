@@ -1,22 +1,37 @@
-# This workflow will triage pull requests and apply a label based on the
-# paths that are modified in the pull request.
-#
-# To use this workflow, you will need to set up a .github/labeler.yml
-# file with configuration.  For more information, see:
-# https://github.com/actions/labeler
+name: Autonomous PR Risk Classifier
 
-name: Labeler
-on: [pull_request_target]
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   label:
-
+    name: Autonomous Labeling
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
+      issues: write
 
     steps:
-    - uses: actions/labeler@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
       with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        fetch-depth: 0 # Need full history to get diff
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.x
+
+    - name: Fetch PR Diff
+      run: |
+        gh pr diff ${{ github.event.pull_request.number }} > pr_diff.txt
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Run Risk Classifier and Auto-Approve
+      run: npx ts-node scripts/risk_classifier.ts pr_diff.txt
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}

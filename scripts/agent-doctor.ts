@@ -54,22 +54,35 @@ async function runDoctor() {
   try {
     const status = execSync('git status --porcelain').toString();
     if (status.length > 0) {
+      console.log('🤖 Agentic remediation: Local changes detected. Setting identity...');
+      execSync('git config --global user.name "EchoCoder Agent"');
+      execSync('git config --global user.email "agent@echocoder.ai"');
+
       console.log('Applying remediation commit...');
       execSync('git add .');
       execSync(`git commit -m "fix(ci): autonomous self-healing - ${proposedFix}"`);
-      // Warning: Requires GITHUB_TOKEN write access
-      console.log('Pushing fix to remote... (dry run for local)');
+      
+      console.log('Pushing fix to remote...');
       if (process.env.CI) {
-        // execSync('git push origin HEAD');
-        console.log('In CI: Make sure to uncomment push command if GITHUB_TOKEN has write access.');
+        // If it's a pull request, we need to push to the source branch, not the merge ref.
+        const headRef = process.env.GITHUB_HEAD_REF;
+        if (headRef) {
+          console.log(`Pushing to source branch: ${headRef}`);
+          execSync(`git push origin HEAD:${headRef}`, { stdio: 'inherit' });
+        } else {
+          console.log('Pushing to default branch ref (push event)');
+          execSync('git push origin HEAD', { stdio: 'inherit' });
+        }
       }
       console.log('✅ Self-healing complete. CI should re-trigger.');
     } else {
-      console.log('No local changes made. Self-healing was unable to resolve the issue directly.');
+      console.log('ℹ️ No local changes made. Self-healing was unable to resolve the issue directly.');
     }
   } catch (err: any) {
-    console.error('Failed to commit remediation:', err.message);
+    console.error('❌ Failed to commit remediation:', err.message);
   }
 }
 
-runDoctor();
+runDoctor().catch(err => {
+  console.error('❌ Pipeline Doctor CRITICAL FAILURE:', err);
+});
