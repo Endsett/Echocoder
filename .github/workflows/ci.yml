@@ -50,3 +50,11 @@ jobs:
     - name: Run Mutation Tests (Draft)
       run: npm run test:mutation
       continue-on-error: true # Mutation tests are intensive, don't fail initially
+
+    - name: Pipeline Doctor (Self-Healing Interceptor)
+      if: failure()
+      run: |
+        echo "Build failed. Triggering Agent Doctor..."
+        # Extract logs for the doctor to analyze (simplified for demonstration)
+        export GITHUB_STEP_SUMMARY="./failed_logs.txt"
+        npx ts-node scripts/agent-doctor.ts
