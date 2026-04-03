@@ -1,0 +1,52 @@
+name: EchoCoder CI
+
+on:
+  push:
+    branches: [ main, feature/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci --legacy-peer-deps
+
+    - name: Lint
+      run: npm run lint
+
+    - name: Build
+      run: npm run build
+
+    - name: Run Parser Tests
+      run: npm run test:parser
+
+    - name: Run Workflow Tests
+      run: npm run test:workflow
+
+    - name: Run Runtime Tests (Mocked)
+      run: |
+        export OPENCLAUDE_BINARY_PATH="./tests/mocks/agent.sh"
+        chmod +x ./tests/mocks/agent.sh
+        npm run test:runtime
+
+    - name: Run Property-Based Tests
+      run: npm run test:property
+
+    - name: Run Mutation Tests (Draft)
+      run: npm run test:mutation
+      continue-on-error: true # Mutation tests are intensive, don't fail initially

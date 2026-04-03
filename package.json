@@ -351,15 +351,20 @@
     "test:parser": "npx tsc -p tests/parser/tsconfig.json && node tests/parser/dist/tests/parser/ndjson-parser.test.js && node tests/parser/dist/tests/parser/event-router.integration.test.js",
     "test:workflow": "npx tsc -p tests/workflow/tsconfig.json && node tests/workflow/dist/tests/workflow/loop.test.js",
     "test:runtime": "npx tsc -p src/tests/tsconfig.json && node src/tests/dist/tests/SessionManager.test.js && node src/tests/dist/tests/ProcessManager.test.js",
+    "test:property": "npx tsc -p tests/property/tsconfig.json && node tests/property/dist/tests/property/parser.prop.test.js",
+    "test:mutation": "stryker run",
+    "test": "npm run lint && npm run test:parser && npm run test:workflow && npm run test:runtime && npm run test:property",
     "package": "npx @vscode/vsce package --no-dependencies"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^9.6.0",
+    "@stryker-mutator/typescript-checker": "^9.6.0",
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.100.0",
     "@vscode/vsce": "^3.2.0",
     "esbuild": "^0.24.0",
     "eslint": "^9.0.0",
+    "fast-check": "^4.6.0",
     "typescript": "^5.7.0"
-  },
-  "dependencies": {}
+  }
 }
