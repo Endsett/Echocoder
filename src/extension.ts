@@ -16,6 +16,9 @@ import { PromptAssembler } from './context/PromptAssembler';
 import { ToolInterceptor } from './security/ToolInterceptor';
 import { SandboxDetector } from './security/SandboxDetector';
 import { CommandRegistry } from './commands/CommandRegistry';
+import { SessionManager } from './core/SessionManager';
+import { WorkflowLoop } from './core/workflow/loop';
+import { PlanViewerProvider } from './ui/PlanViewerProvider';
 
 export function activate(context: vscode.ExtensionContext) {
   const outputChannel = vscode.window.createOutputChannel('EchoCoder Agent', { log: true });
@@ -80,6 +83,22 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerWebviewViewProvider(AgentPanelProvider.viewType, agentPanelProvider)
   );
 
+  const sessionManager = new SessionManager(context);
+  const workflowLoop = new WorkflowLoop(
+    processManager,
+    eventRouter,
+    promptAssembler,
+    outputChannel
+  );
+
+  const planViewerProvider = new PlanViewerProvider(
+    context.extensionUri,
+    workflowLoop
+  );
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider('echocoder.planViewer', planViewerProvider)
+  );
+
   const sessionHistoryProvider = new SessionHistoryProvider(context);
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('echocoder.sessionHistory', sessionHistoryProvider)
@@ -104,6 +123,8 @@ export function activate(context: vscode.ExtensionContext) {
     processManager,
     promptAssembler,
     composerEngine,
+    workflowLoop,
+    sessionManager,
     outputChannel
   );
   context.subscriptions.push(...commandRegistry.registerAll());
@@ -123,11 +144,12 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     if (event.type === 'system' && event.subtype.startsWith('hook_')) {
-      if (event.stderr) {
-        outputChannel.appendLine(`[Hook][stderr] ${event.stderr}`);
+      const hookEvent = event as any;
+      if (hookEvent.stderr) {
+        outputChannel.appendLine(`[Hook][stderr] ${hookEvent.stderr}`);
       }
-      if (event.stdout) {
-        outputChannel.appendLine(`[Hook][stdout] ${event.stdout}`);
+      if (hookEvent.stdout) {
+        outputChannel.appendLine(`[Hook][stdout] ${hookEvent.stdout}`);
       }
     }
   });
@@ -156,7 +178,9 @@ export function activate(context: vscode.ExtensionContext) {
     terminalManager,
     terminalCapture,
     composerEngine,
-    commandRegistry
+    commandRegistry,
+    sessionManager,
+    workflowLoop
   );
 
   outputChannel.appendLine('[EchoCoder] Extension activated');

@@ -83,6 +83,11 @@
           "type": "webview"
         },
         {
+          "id": "echocoder.planViewer",
+          "name": "Plan Viewer",
+          "type": "webview"
+        },
+        {
           "id": "echocoder.sessionHistory",
           "name": "Sessions"
         }
@@ -142,6 +147,16 @@
       {
         "command": "echocoder.rejectChange",
         "title": "EchoCoder: Reject Change",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.approvePlan",
+        "title": "EchoCoder: Approve Plan",
+        "category": "EchoCoder"
+      },
+      {
+        "command": "echocoder.rejectPlan",
+        "title": "EchoCoder: Reject Plan",
         "category": "EchoCoder"
       },
       {
@@ -320,6 +335,7 @@
     "watch": "node esbuild.js --watch",
     "lint": "eslint src --ext ts",
     "test:parser": "npx tsc -p tests/parser/tsconfig.json && node tests/parser/dist/tests/parser/ndjson-parser.test.js && node tests/parser/dist/tests/parser/event-router.integration.test.js",
+    "test:workflow": "npx tsc -p tests/workflow/tsconfig.json && node tests/workflow/dist/tests/workflow/loop.test.js",
     "package": "npx @vscode/vsce package --no-dependencies"
   },
   "devDependencies": {

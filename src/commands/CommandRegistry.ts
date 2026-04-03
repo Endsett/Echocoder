@@ -11,6 +11,8 @@ import { DiffDecorator } from '../editor/DiffDecorator';
 import { ProcessManager } from '../core/ProcessManager';
 import { PromptAssembler } from '../context/PromptAssembler';
 import { ComposerEngine } from '../composer/ComposerEngine';
+import { WorkflowLoop } from '../core/workflow/loop';
+import { SessionManager } from '../core/SessionManager';
 
 export class CommandRegistry {
   private disposables: vscode.Disposable[] = [];
@@ -21,6 +23,8 @@ export class CommandRegistry {
     private processManager: ProcessManager,
     private promptAssembler: PromptAssembler,
     private composerEngine: ComposerEngine,
+    private workflowLoop: WorkflowLoop,
+    private sessionManager: SessionManager,
     private outputChannel: vscode.OutputChannel
   ) {}
 
@@ -94,11 +98,23 @@ export class CommandRegistry {
       this.diffDecorator.acceptAllChanges();
     });
 
+    // Approve Plan
+    this.register('echocoder.approvePlan', () => {
+      this.workflowLoop.approvePlan();
+    });
+
+    // Reject Plan
+    this.register('echocoder.rejectPlan', () => {
+      this.workflowLoop.rejectPlan();
+    });
+
     // New Session
     this.register('echocoder.newSession', () => {
       this.processManager.abort('new session requested');
       this.composerEngine.cancelCompose();
       this.diffDecorator.rejectAllChanges();
+      this.sessionManager.resetSession();
+      this.workflowLoop.reset();
       vscode.window.showInformationMessage('EchoCoder: Session state cleared.');
     });
 
