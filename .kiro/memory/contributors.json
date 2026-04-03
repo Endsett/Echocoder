@@ -1,0 +1,23 @@
+{
+  "project": "EchoCoder",
+  "config": {
+    "tiers": {
+      "0": "New / Unverified",
+      "1": "Contributor",
+      "2": "Member / Trusted",
+      "3": "Maintainer"
+    },
+    "auto_upgrade_thresholds": {
+      "merges_to_tier_1": 3,
+      "merges_to_tier_2": 10
+    }
+  },
+  "contributors": [
+    {
+      "username": "cy569",
+      "trust_tier": 3,
+      "total_merges": 100,
+      "last_activity": "2026-04-03T23:18:00Z"
+    }
+  ]
+}
