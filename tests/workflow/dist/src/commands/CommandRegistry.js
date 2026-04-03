@@ -123,6 +123,10 @@ class CommandRegistry {
         this.register('echocoder.rejectPlan', () => {
             this.workflowLoop.rejectPlan();
         });
+        // Repair Plan
+        this.register('echocoder.repairPlan', () => {
+            this.workflowLoop.repairPlan();
+        });
         // New Session
         this.register('echocoder.newSession', () => {
             this.processManager.abort('new session requested');

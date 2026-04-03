@@ -43,8 +43,35 @@ export class PlanViewerProvider implements vscode.WebviewViewProvider {
         case 'reject':
           vscode.commands.executeCommand('echocoder.rejectPlan');
           break;
+        case 'repair':
+          vscode.commands.executeCommand('echocoder.repairPlan');
+          break;
+        case 'showDiff':
+          this.showDiff(msg.index);
+          break;
       }
     });
+  }
+
+  /**
+   * Show a diff edit view for a specific step.
+   */
+  private async showDiff(stepIndex: number): Promise<void> {
+    const plan = this.workflowLoop.currentPlan;
+    if (!plan) return;
+
+    const step = plan.steps.find(s => s.index === stepIndex);
+    if (!step || step.newContent === undefined) return;
+
+    const fileName = step.affectedFiles[0] || 'file';
+    const leftUri = vscode.Uri.parse(`echocoder-diff:original/${fileName}?${encodeURIComponent(step.oldContent || '')}`);
+    const rightUri = vscode.Uri.parse(`echocoder-diff:modified/${fileName}?${encodeURIComponent(step.newContent)}`);
+
+    // Use a custom TextDocumentContentProvider or temporary files for diffing
+    // For simplicity in Phase 1, we'll write to temp files if large, or use virtual documents
+    // Let's use a simpler approach: open the diff directly if we have the file on disk
+    // But since we want to show specifically the agent's intent, we'll use virtual documents.
+    vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, `Diff: ${fileName} (Agent Edit)`);
   }
 
   /**
@@ -115,7 +142,10 @@ export class PlanViewerProvider implements vscode.WebviewViewProvider {
           <span class="step-status">${statusIcon}</span>
         </div>
         <div class="step-desc">${this.escapeHtml(s.description)}</div>
-        ${s.affectedFiles.length > 0 ? `<div class="step-files">Files: ${s.affectedFiles.join(', ')}</div>` : ''}
+        <div class="step-footer">
+          ${s.affectedFiles.length > 0 ? `<span class="step-files">Files: ${s.affectedFiles.join(', ')}</span>` : ''}
+          ${s.newContent !== undefined ? `<a href="#" class="diff-link" onclick="viewDiff(${s.index})">View Diff</a>` : ''}
+        </div>
         ${s.output ? `<div class="step-error">${this.escapeHtml(s.output)}</div>` : ''}
       </div>`;
     }).join('');
@@ -137,7 +167,15 @@ export class PlanViewerProvider implements vscode.WebviewViewProvider {
       isExecuting ? '<span style="color: var(--vscode-charts-blue)">Executing...</span>' :
       isCompleted ? '<span style="color: var(--vscode-charts-green)">Completed</span>' :
       isFailed ? '<span style="color: var(--vscode-charts-red)">Failed</span>' :
+      phase === 'repairing' ? '<span style="color: var(--vscode-charts-blue)">Repairing...</span>' :
       '<span style="color: var(--vscode-charts-yellow)">Awaiting Approval</span>';
+
+    // Show Repair action if failed on verification
+    const failedActions = isFailed ? `
+      <div class="actions fixed-bottom">
+        <button class="button-primary" id="btn-repair">Repair with AI</button>
+        <button class="button-secondary" id="btn-dismiss">Close</button>
+      </div>` : '';
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -169,16 +207,30 @@ export class PlanViewerProvider implements vscode.WebviewViewProvider {
   </div>
 
   ${actionsHtml}
+  ${failedActions}
 
   <script>
     const vscode = acquireVsCodeApi();
     
+    function viewDiff(index) {
+      vscode.postMessage({ command: 'showDiff', index });
+    }
+
     document.getElementById('btn-approve')?.addEventListener('click', () => {
       vscode.postMessage({ command: 'approve' });
     });
     
     document.getElementById('btn-reject')?.addEventListener('click', () => {
       vscode.postMessage({ command: 'reject' });
+    });
+
+    document.getElementById('btn-repair')?.addEventListener('click', () => {
+      vscode.postMessage({ command: 'repair' });
+    });
+
+    document.getElementById('btn-dismiss')?.addEventListener('click', () => {
+      // Just clear view
+      document.body.innerHTML = '<div class="empty-state">Workflow dismissed</div>';
     });
   </script>
 </body>
@@ -264,6 +316,25 @@ export class PlanViewerProvider implements vscode.WebviewViewProvider {
         word-break: break-all;
       }
       
+      .step-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 5px;
+      }
+      
+      .diff-link {
+        color: var(--vscode-textLink-foreground);
+        text-decoration: none;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      
+      .diff-link:hover {
+        text-decoration: underline;
+      }
+
       .steps-container h3 {
         font-size: 12px;
         text-transform: uppercase;

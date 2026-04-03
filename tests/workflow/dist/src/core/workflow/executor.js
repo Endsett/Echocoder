@@ -85,11 +85,19 @@ class Executor {
                 // Track file mutations
                 if ((0, agent_events_1.isFileEdit)(event)) {
                     modifiedFiles.add(event.path);
+                    if (currentStepIndex < plan.steps.length) {
+                        plan.steps[currentStepIndex].oldContent = event.old_content;
+                        plan.steps[currentStepIndex].newContent = event.new_content;
+                    }
                     advanceStep();
                     return;
                 }
                 if ((0, agent_events_1.isFileCreate)(event)) {
                     createdFiles.add(event.path);
+                    if (currentStepIndex < plan.steps.length) {
+                        plan.steps[currentStepIndex].oldContent = '';
+                        plan.steps[currentStepIndex].newContent = event.content;
+                    }
                     advanceStep();
                     return;
                 }

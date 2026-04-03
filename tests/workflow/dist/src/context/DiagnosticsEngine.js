@@ -62,11 +62,21 @@ class DiagnosticsEngine {
             totalErrors += errors.length;
             totalWarnings += warnings.length;
             parts.push(`\n📄 ${uri.fsPath}:`);
-            for (const diag of errors.slice(0, 5)) { // Cap at 5 errors per file
+            for (const diag of errors.slice(0, 10)) { // Increased cap
                 parts.push(`  ❌ L${diag.range.start.line + 1}: ${diag.message} [${diag.source || 'unknown'}]`);
+                if (diag.relatedInformation) {
+                    for (const related of diag.relatedInformation.slice(0, 2)) {
+                        parts.push(`    ↳ Related: ${related.location.uri.fsPath} L${related.location.range.start.line + 1}: ${related.message}`);
+                    }
+                }
             }
-            for (const diag of warnings.slice(0, 3)) { // Cap at 3 warnings per file
+            for (const diag of warnings.slice(0, 5)) {
                 parts.push(`  ⚠️ L${diag.range.start.line + 1}: ${diag.message} [${diag.source || 'unknown'}]`);
+                if (diag.relatedInformation) {
+                    for (const related of diag.relatedInformation.slice(0, 2)) {
+                        parts.push(`    ↳ Related: ${related.location.uri.fsPath} L${related.location.range.start.line + 1}: ${related.message}`);
+                    }
+                }
             }
         }
         return {
@@ -88,7 +98,12 @@ class DiagnosticsEngine {
         }
         const lines = diagnostics.map(d => {
             const severity = d.severity === vscode.DiagnosticSeverity.Error ? '❌' : '⚠️';
-            return `${severity} Line ${d.range.start.line + 1}: ${d.message}`;
+            let msg = `${severity} L${d.range.start.line + 1}: ${d.message}`;
+            if (d.relatedInformation) {
+                const related = d.relatedInformation.map(r => `\n    ↳ Related: ${r.message}`).join('');
+                msg += related;
+            }
+            return msg;
         });
         return `Diagnostics for ${uri.fsPath}:\n${lines.join('\n')}`;
     }

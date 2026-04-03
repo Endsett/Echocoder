@@ -19,6 +19,7 @@ import { CommandRegistry } from './commands/CommandRegistry';
 import { SessionManager } from './core/SessionManager';
 import { WorkflowLoop } from './core/workflow/loop';
 import { PlanViewerProvider } from './ui/PlanViewerProvider';
+import { DiffContentProvider } from './ui/DiffContentProvider';
 
 export function activate(context: vscode.ExtensionContext) {
   const outputChannel = vscode.window.createOutputChannel('EchoCoder Agent', { log: true });
@@ -97,6 +98,15 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider('echocoder.planViewer', planViewerProvider)
+  );
+
+  // Diff Content Provider
+  const diffContentProvider = new DiffContentProvider();
+  context.subscriptions.push(
+    vscode.workspace.registerTextDocumentContentProvider(
+      DiffContentProvider.SCHEME,
+      diffContentProvider
+    )
   );
 
   const sessionHistoryProvider = new SessionHistoryProvider(context);

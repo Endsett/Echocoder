@@ -56,6 +56,7 @@ const CommandRegistry_1 = require("./commands/CommandRegistry");
 const SessionManager_1 = require("./core/SessionManager");
 const loop_1 = require("./core/workflow/loop");
 const PlanViewerProvider_1 = require("./ui/PlanViewerProvider");
+const DiffContentProvider_1 = require("./ui/DiffContentProvider");
 function activate(context) {
     const outputChannel = vscode.window.createOutputChannel('EchoCoder Agent', { log: true });
     outputChannel.appendLine('[EchoCoder] Activating extension');
@@ -94,6 +95,9 @@ function activate(context) {
     const workflowLoop = new loop_1.WorkflowLoop(processManager, eventRouter, promptAssembler, outputChannel);
     const planViewerProvider = new PlanViewerProvider_1.PlanViewerProvider(context.extensionUri, workflowLoop);
     context.subscriptions.push(vscode.window.registerWebviewViewProvider('echocoder.planViewer', planViewerProvider));
+    // Diff Content Provider
+    const diffContentProvider = new DiffContentProvider_1.DiffContentProvider();
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(DiffContentProvider_1.DiffContentProvider.SCHEME, diffContentProvider));
     const sessionHistoryProvider = new SessionHistoryProvider_1.SessionHistoryProvider(context);
     context.subscriptions.push(vscode.window.registerTreeDataProvider('echocoder.sessionHistory', sessionHistoryProvider));
     const statusBarManager = new StatusBarManager_1.StatusBarManager(eventRouter, processManager);

@@ -30,6 +30,12 @@ export interface PlanStep {
 
   /** Optional output or error message produced during execution. */
   output?: string;
+
+  /** Pre-mutation content for diff preview. */
+  oldContent?: string;
+
+  /** Post-mutation content for diff preview. */
+  newContent?: string;
 }
 
 /**
@@ -127,6 +133,7 @@ export interface VerificationReport {
 export type WorkflowPhase =
   | 'idle'
   | 'planning'
+  | 'repairing'
   | 'awaiting_approval'
   | 'executing'
   | 'verifying'

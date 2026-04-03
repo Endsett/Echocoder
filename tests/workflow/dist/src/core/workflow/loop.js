@@ -134,6 +134,37 @@ class WorkflowLoop {
         this.outputChannel.appendLine(`[Workflow] Plan "${plan.id}" rejected`);
         this.reset();
     }
+    /**
+     * Automatically generate a repair plan for a failed verification.
+     */
+    async repairPlan(token) {
+        const report = this.state.verificationReport;
+        if (!report || report.passed) {
+            throw new Error('No failed verification report to repair');
+        }
+        this.setPhase('repairing');
+        const issues = report.checks
+            .filter(c => !c.passed)
+            .map(c => `[${c.name}] failed:\n${c.output || 'No output'}`)
+            .join('\n\n');
+        const repairPrompt = `The previous plan was executed but verification failed with the following issues:\n\n${issues}\n\nPlease generate a new plan to fix these issues. Focus ONLY on the fixes.`;
+        try {
+            const plan = await this.planner.generatePlan(repairPrompt, token);
+            plan.state = 'draft';
+            plan.summary = `Repair: ${plan.summary}`;
+            this.state.plan = plan;
+            this.setPhase('awaiting_approval');
+            this._onPlanReady.fire(plan);
+            return plan;
+        }
+        catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            this.outputChannel.appendLine(`[Workflow] Repair planning failed: ${message}`);
+            this._onError.fire(message);
+            this.setPhase('failed');
+            throw err;
+        }
+    }
     // ── Phase 3 & 4: Execute + Verify ─────────────────────────────────
     /**
      * Execute an approved plan and then run verification.
