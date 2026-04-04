@@ -58,6 +58,7 @@ class ProcessManager {
         this.eventCallbacks = [];
         this.errorCallbacks = [];
         this.exitCallbacks = [];
+        this.traceChannel = vscode.window.createOutputChannel('EchoCoder: Agent Trace');
     }
     get running() {
         return this.isRunning;
@@ -142,7 +143,14 @@ class ProcessManager {
         const args = this.buildArgs(options, preflight);
         const providerEnv = (0, config_1.getProviderEnv)(config);
         this.currentRunLabel = `${mode}:${toolPolicy}`;
-        this.outputChannel.appendLine(`[Agent] Starting ${this.currentRunLabel} via ${preflight.displayLabel} ${args.join(' ')}`);
+        if (config.agentTraceEnabled) {
+            this.traceChannel.clear();
+            this.traceChannel.show(true);
+            this.traceChannel.appendLine(`[Agent Trace] Starting ${this.currentRunLabel} at ${new Date().toISOString()}`);
+            this.traceChannel.appendLine(`[Agent Trace] CMD: ${preflight.command} ${preflight.commandArgsPrefix.join(' ')} ${args.join(' ')}`);
+            this.traceChannel.appendLine(`[Agent Trace] CWD: ${options.cwd}`);
+        }
+        this.outputChannel.appendLine(`[Agent] Starting ${this.currentRunLabel} via ${preflight.displayLabel}`);
         this.process = (0, child_process_1.spawn)(preflight.command, [...preflight.commandArgsPrefix, ...args], {
             cwd: options.cwd,
             env: {
@@ -152,26 +160,52 @@ class ProcessManager {
                 NO_COLOR: '1',
                 FORCE_COLOR: '0',
             },
-            stdio: ['ignore', 'pipe', 'pipe'],
+            stdio: ['pipe', 'pipe', 'pipe'],
             windowsHide: true,
         });
+        if (this.process.stdin) {
+            this.process.stdin.setDefaultEncoding('utf-8');
+            this.process.stdin.write(options.prompt);
+            this.process.stdin.end();
+        }
         this.isRunning = true;
         this.parser = new NDJSONParser_1.NDJSONParser((event) => this.emitEvent(event), (line, error) => {
             this.outputChannel.appendLine(`[Parser] ${error.message}`);
             this.outputChannel.appendLine(`[Parser] Line: ${line.substring(0, 400)}`);
         });
+        // Notify listeners that the system has initialized
+        this.emitEvent({
+            type: 'system',
+            subtype: 'init',
+            model: config.model,
+            cwd: options.cwd,
+        });
         this.process.stdout?.setEncoding('utf-8');
         this.process.stdout?.on('data', (chunk) => {
+            if (config.agentTraceEnabled) {
+                this.traceChannel.appendLine(`[stdout] ${chunk}`);
+            }
             this.parser?.feed(chunk);
         });
         this.process.stderr?.setEncoding('utf-8');
         this.process.stderr?.on('data', (chunk) => {
+            if (config.agentTraceEnabled) {
+                this.traceChannel.appendLine(`[stderr] ${chunk}`);
+            }
             for (const line of chunk.split(/\r?\n/).filter(Boolean)) {
                 this.outputChannel.appendLine(`[stderr] ${line}`);
                 this.emitError(line);
             }
         });
+        const timeoutMs = config.executionTimeout || 60000;
+        const timeout = setTimeout(() => {
+            if (this.isRunning) {
+                this.outputChannel.appendLine(`[Agent] Execution timed out after ${timeoutMs}ms`);
+                this.abort('timeout');
+            }
+        }, timeoutMs);
         this.process.on('exit', (code) => {
+            clearTimeout(timeout);
             this.outputChannel.appendLine(`[Agent] ${this.currentRunLabel || 'run'} exited with code ${code}`);
             this.parser?.flush();
             this.cleanupAfterRun();
@@ -307,6 +341,21 @@ class ProcessManager {
             if (resolved) {
                 return resolved;
             }
+        }
+        // Last resort: raw command if it exists in PATH
+        try {
+            const { execSync } = require('child_process');
+            const testCmd = process.platform === 'win32' ? 'where' : 'which';
+            execSync(`${testCmd} openclaude`);
+            return {
+                command: 'openclaude',
+                commandArgsPrefix: [],
+                resolvedBinaryPath: 'PATH',
+                displayLabel: 'openclaude (from PATH)',
+            };
+        }
+        catch {
+            // openclaude not in PATH
         }
         return {
             command: 'openclaude',

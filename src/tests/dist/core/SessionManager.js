@@ -57,15 +57,14 @@ class SessionManager {
      * Add a new conversation turn to the active session.
      * Automatically creates a new session if none exists.
      */
-    addTurn(role, content) {
+    addTurn(role, content, model) {
         if (!this.activeSession) {
-            const config = require('../types/config').getConfig();
             this.activeSession = {
                 id: `session-${Date.now()}`,
                 turns: [],
                 startTime: Date.now(),
                 lastUpdated: Date.now(),
-                model: config.model,
+                model: model || 'claude-3-sonnet',
             };
         }
         // Deduplication: Don't add if it's identical to the last turn of the same role

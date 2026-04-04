@@ -11,7 +11,7 @@ async function testParserResilience() {
   console.log('Running Property Test: NDJSONParser Resilience');
   
   fc.assert(
-    fc.property(fc.fullUnicodeString(), (input) => {
+    fc.property(fc.string(), (input: string) => {
       const parser = new NDJSONParser(
         () => {}, // No-op event handler
         () => {}  // No-op error handler

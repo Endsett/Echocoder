@@ -51,12 +51,12 @@ export class Supervisor {
 
     this.log(`[Supervisor] Dispatching to CodeAgent...`);
     
-    await this.processManager.run({
+    await this.processManager.spawn({
       prompt: goal,
       cwd: context.workspacePath,
       mode: 'agentic',
       toolPolicy: 'auto'
-    }, config);
+    } as any);
   }
 
   private log(message: string): void {

@@ -5,3 +5,6 @@ openclaude/node_modules/
 openclaude/dist/
 tests/parser/dist/
 *.txt
+tests/workflow/dist/
+tests/property/dist/
+src/tests/dist/

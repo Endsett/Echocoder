@@ -44,9 +44,11 @@ exports.NDJSONParser = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 class NDJSONParser {
+    buffer = '';
+    onEvent;
+    onError;
+    pendingTools = new Map();
     constructor(onEvent, onError) {
-        this.buffer = '';
-        this.pendingTools = new Map();
         this.onEvent = onEvent;
         this.onError = onError || (() => { });
     }

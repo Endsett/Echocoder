@@ -100,7 +100,7 @@ function activate(context) {
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(DiffContentProvider_1.DiffContentProvider.SCHEME, diffContentProvider));
     const sessionHistoryProvider = new SessionHistoryProvider_1.SessionHistoryProvider(context);
     context.subscriptions.push(vscode.window.registerTreeDataProvider('echocoder.sessionHistory', sessionHistoryProvider));
-    const statusBarManager = new StatusBarManager_1.StatusBarManager(eventRouter, processManager);
+    const statusBarManager = new StatusBarManager_1.StatusBarManager(eventRouter, processManager, workflowLoop);
     const chatHandler = new ChatParticipantHandler_1.ChatParticipantHandler(processManager, eventRouter, promptAssembler, composerEngine, outputChannel);
     const participant = vscode.chat.createChatParticipant('echocoder.agent', chatHandler.getHandler());
     participant.iconPath = vscode.Uri.joinPath(context.extensionUri, 'images', 'echocoder-icon.svg');

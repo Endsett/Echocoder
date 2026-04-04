@@ -114,7 +114,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerTreeDataProvider('echocoder.sessionHistory', sessionHistoryProvider)
   );
 
-  const statusBarManager = new StatusBarManager(eventRouter, processManager);
+  const statusBarManager = new StatusBarManager(eventRouter, processManager, workflowLoop);
   const chatHandler = new ChatParticipantHandler(
     processManager,
     eventRouter,

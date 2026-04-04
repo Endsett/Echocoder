@@ -10,6 +10,8 @@ import { EventRouter } from '../core/EventRouter';
 import { ProcessManager } from '../core/ProcessManager';
 import { getConfig } from '../types/config';
 
+import { WorkflowLoop } from '../core/workflow/loop';
+
 export class StatusBarManager {
   private statusItem: vscode.StatusBarItem;
   private tokenItem: vscode.StatusBarItem;
@@ -17,7 +19,8 @@ export class StatusBarManager {
 
   constructor(
     private eventRouter: EventRouter,
-    private processManager: ProcessManager
+    private processManager: ProcessManager,
+    private workflowLoop?: WorkflowLoop
   ) {
     // Left side: Agent status
     this.statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
@@ -75,12 +78,37 @@ export class StatusBarManager {
         this.updateModel();
       }
     });
+
+    // Listen for Workflow Loop phase changes if provided
+    if (this.workflowLoop) {
+      this.workflowLoop.onPhaseChange((state) => {
+        if (state.phase === 'awaiting_approval') {
+          this.setAwaitingApproval();
+        } else if (state.phase === 'executing') {
+          this.setWorking('Executing Plan...');
+        } else if (state.phase === 'verifying') {
+          this.setWorking('Verifying Plan...');
+        } else if (state.phase === 'completed') {
+          this.setIdle();
+        } else if (state.phase === 'failed') {
+          this.setError();
+        }
+      });
+    }
   }
 
   private setIdle(): void {
     this.statusItem.text = '$(hubot) EchoCoder';
     this.statusItem.tooltip = 'EchoCoder AI — Ready';
     this.statusItem.backgroundColor = undefined;
+    this.statusItem.command = 'echocoder.openPanel';
+  }
+
+  private setAwaitingApproval(): void {
+    this.statusItem.text = '$(bell) EchoCoder: Plan Ready';
+    this.statusItem.tooltip = 'EchoCoder AI — Click to View Plan';
+    this.statusItem.backgroundColor = new vscode.ThemeColor('statusBarItem.focusBackground');
+    this.statusItem.command = 'echocoder.planViewer.focus';
   }
 
   private setWorking(detail: string): void {

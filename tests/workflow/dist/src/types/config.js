@@ -62,6 +62,8 @@ function getConfig() {
         ghostTextEnabled: cfg.get('ghostText.enabled', true),
         ghostTextDebounceMs: cfg.get('ghostText.debounceMs', 300),
         contextFiles: cfg.get('contextFiles', 10),
+        executionTimeout: cfg.get('executionTimeout', 60000),
+        agentTraceEnabled: cfg.get('agentTraceEnabled', false),
     };
 }
 /**

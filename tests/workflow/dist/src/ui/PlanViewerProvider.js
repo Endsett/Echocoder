@@ -114,13 +114,14 @@ class PlanViewerProvider {
         const styleUri = this.getStyleUri();
         if (!plan || phase === 'idle' || phase === 'planning') {
             const message = phase === 'planning'
-                ? '<div class="state-msg">Generating plan... <span class="spinner"></span></div>'
+                ? '<div class="state-msg">Generating plan... <span class="codicon codicon-sync codicon-modifier-spin"></span></div>'
                 : '<div class="state-msg">No active plan</div>';
             return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://unpkg.com/@vscode/codicons/dist/codicon.css" rel="stylesheet" />
   <style>${styleUri}</style>
 </head>
 <body>
@@ -133,31 +134,44 @@ class PlanViewerProvider {
         const isExecuting = phase === 'executing';
         const isCompleted = phase === 'completed';
         const isFailed = phase === 'failed';
-        // Risk badge color
         const riskColor = risk === 'low' ? 'var(--vscode-charts-green)' :
             risk === 'medium' ? 'var(--vscode-charts-yellow)' :
                 'var(--vscode-charts-red)';
+        const totalSteps = steps.length;
+        let completedSteps = 0;
         const stepsHtml = steps.map(s => {
-            const statusIcon = s.status === 'pending' ? '⏳' :
-                s.status === 'running' ? '🔄' :
-                    s.status === 'done' ? '✅' :
-                        s.status === 'failed' ? '❌' : '⏭️';
+            let iconClass = 'codicon-debug-step-over';
+            if (s.status === 'pending')
+                iconClass = 'codicon-clock';
+            else if (s.status === 'running')
+                iconClass = 'codicon-sync codicon-modifier-spin';
+            else if (s.status === 'done') {
+                iconClass = 'codicon-check';
+                completedSteps++;
+            }
+            else if (s.status === 'failed')
+                iconClass = 'codicon-error';
+            else if (s.status === 'skipped') {
+                iconClass = 'codicon-debug-step-over';
+                completedSteps++;
+            }
             const statusClass = s.status === 'running' ? 'step-running' : '';
             return `
       <div class="plan-step ${statusClass}">
         <div class="step-header">
           <span class="step-index">${s.index}.</span>
           <span class="step-category badge-${s.category}">${s.category}</span>
-          <span class="step-status">${statusIcon}</span>
+          <span class="step-status"><i class="codicon ${iconClass}"></i></span>
         </div>
         <div class="step-desc">${this.escapeHtml(s.description)}</div>
         <div class="step-footer">
           ${s.affectedFiles.length > 0 ? `<span class="step-files">Files: ${s.affectedFiles.join(', ')}</span>` : ''}
-          ${s.newContent !== undefined ? `<a href="#" class="diff-link" onclick="viewDiff(${s.index})">View Diff</a>` : ''}
+          ${s.newContent !== undefined ? `<a href="#" class="diff-link" onclick="viewDiff(${s.index})"><i class="codicon codicon-diff"></i> View Diff</a>` : ''}
         </div>
         ${s.output ? `<div class="step-error">${this.escapeHtml(s.output)}</div>` : ''}
       </div>`;
         }).join('');
+        const progressPercent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
         const filesHtml = `
       <div class="files-summary">
         <div><strong>Writes to:</strong> ${writeFiles.length > 0 ? writeFiles.join(', ') : 'None'}</div>
@@ -185,6 +199,7 @@ class PlanViewerProvider {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://unpkg.com/@vscode/codicons/dist/codicon.css" rel="stylesheet" />
   <style>${styleUri}</style>
 </head>
 <body>
@@ -194,6 +209,9 @@ class PlanViewerProvider {
       <div class="meta-row">
         <span class="badge" style="background-color: ${riskColor}; color: #000">Risk: ${risk}</span>
         <span class="status-indicator">${headerStatus}</span>
+      </div>
+      <div class="progress-bar-container" title="Progress: ${progressPercent}%">
+        <div class="progress-bar-fill" style="width: ${progressPercent}%"></div>
       </div>
     </div>
     
@@ -302,6 +320,21 @@ class PlanViewerProvider {
         font-weight: bold;
       }
       
+      .progress-bar-container {
+        margin-top: 10px;
+        width: 100%;
+        height: 6px;
+        background-color: var(--vscode-editorWidget-background);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        background-color: var(--vscode-progressBar-background);
+        transition: width 0.3s ease;
+      }
+      
       .plan-summary {
         font-size: 13px;
         margin-bottom: 15px;
@@ -330,6 +363,9 @@ class PlanViewerProvider {
         font-size: 11px;
         font-weight: 600;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
       }
       
       .diff-link:hover {
