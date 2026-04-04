@@ -1,23 +1,22 @@
 {
-  "project": "EchoCoder",
-  "config": {
-    "tiers": {
-      "0": "New / Unverified",
-      "1": "Contributor",
-      "2": "Member / Trusted",
-      "3": "Maintainer"
-    },
-    "auto_upgrade_thresholds": {
-      "merges_to_tier_1": 3,
-      "merges_to_tier_2": 10
-    }
-  },
   "contributors": [
     {
-      "username": "cy569",
+      "username": "Endsett",
       "trust_tier": 3,
-      "total_merges": 100,
-      "last_activity": "2026-04-03T23:18:00Z"
+      "merged_prs": 50,
+      "role": "Lead Maintainer"
+    },
+    {
+      "username": "cy569",
+      "trust_tier": 2,
+      "merged_prs": 15,
+      "role": "Member"
+    },
+    {
+      "username": "agent-echo",
+      "trust_tier": 2,
+      "merged_prs": 5,
+      "role": "AI Agent"
     }
   ]
 }

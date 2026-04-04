@@ -16,6 +16,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -25,8 +27,17 @@ jobs:
     - name: Install dependencies
       run: npm ci --legacy-peer-deps
 
-    - name: Run Issue Solver Agent
-      run: npx ts-node scripts/issue_solver_agent.ts
+    - name: Preflight Triage & Reputation Check
+      id: preflight
+      run: |
+        npx ts-node scripts/trust_checker.ts ${{ github.actor }}
+        # Simple issue labeling can happen here if needed
+
+    - name: Run Dagger-Isolated Issue Solver
+      run: |
+        npx dagger run ts-node scripts/issue_solver_agent.ts
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        PR_AUTHOR: ${{ github.actor }}

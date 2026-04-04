@@ -11,9 +11,9 @@ export class AgentOrchestrator {
   private static LOG_FILE = '.kiro/logs/agent_traces.ndjson';
 
   /**
-   * Logs an agent's "Thought" or "Action" to the central registry.
+   * Logs an agent's "Thought", "Action", or "Result" to the central registry.
    */
-  static log(agentName: string, type: 'THOUGHT' | 'ACTION' | 'ERROR', message: string, metadata: any = {}) {
+  static log(agentName: string, type: 'THOUGHT' | 'ACTION' | 'RESULT' | 'ERROR', message: string, metadata: any = {}) {
     if (!fs.existsSync(this.LOG_DIR)) {
       fs.mkdirSync(this.LOG_DIR, { recursive: true });
     }
@@ -29,7 +29,7 @@ export class AgentOrchestrator {
     fs.appendFileSync(this.LOG_FILE, JSON.stringify(entry) + '\n');
     
     // Also log to console for CI visibility
-    const icon = type === 'ERROR' ? '❌' : (type === 'THOUGHT' ? '🧠' : '🛠️');
+    const icon = type === 'ERROR' ? '❌' : (type === 'THOUGHT' ? '🧠' : (type === 'RESULT' ? '✅' : '🛠️'));
     console.log(`${icon} [${agentName}] ${message}`);
   }
 
